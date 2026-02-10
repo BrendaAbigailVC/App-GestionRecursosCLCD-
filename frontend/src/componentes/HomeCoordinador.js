@@ -14,8 +14,8 @@ import ActualizaCredenciales from "../imagenes/ActualizaciónCredencial2.png";
 import Permiso from "../imagenes/permiso.png";
 import Prestamo from "../imagenes/Prestamo.png";
 import BotonAtras from "../elementos/BotonAtras";
-
-const ImagenLogo1 = styled.img`
+import { ContenedorImagen, ImagenLogo1, ContenedorBotonRegistro } from "../elementos/ContenedoresBotones";
+/*const ImagenLogo1 = styled.img`
   margin-right: 2%;
   width: 35%;
   @media (max-width: 768px) {
@@ -38,7 +38,7 @@ const ContenedorBotonRegistro = styled.div`
   justify-content: center;
   margin: 1.5%;
   gap: 100px;
-`;
+`;*/
 
 const HomeCoordinador = () => {
   const navigate = useNavigate();
@@ -78,68 +78,64 @@ const HomeCoordinador = () => {
       >
         Cerrar sesión
       </Boton>
-
-      <ContenedorImagen>
-        <ImagenLogo1 src={Orden} alt="LogoUam" />
-        <ImagenLogo1 src={Historico} alt="LogoUam" />
-      </ContenedorImagen>
       <ContenedorBotonRegistro>
-        {tienePermiso(0) && (
-          <Boton as="button" primario onClick={() => navigate("/materiales")}>
-            Materiales Disponibles
+        <ContenedorImagen>
+          <ImagenLogo1 src={Orden} alt="LogoUam" />
+          {tienePermiso(0) && (
+            <Boton as="button" primario onClick={() => navigate("/materiales")}>
+              Materiales Disponibles
+            </Boton>
+          )}
+        </ContenedorImagen>
+        <ContenedorImagen>
+          <ImagenLogo1 src={Historico} alt="LogoUam" />
+          <Boton as="button" primario onClick={() => navigate("/historico")}>
+            Historico
           </Boton>
-        )}
-        <Boton as="button" primario onClick={() => navigate("/historico")}>
-          Historico
-        </Boton>
-      </ContenedorBotonRegistro>
-
-      <ContenedorImagen>
-        <ImagenLogo1 src={Usuario} alt="LogoUam" />
-        <ImagenLogo1 src={ActualizaCredenciales} alt="LogoUam" />
-      </ContenedorImagen>
-      <ContenedorBotonRegistro>
-        {tienePermiso(1) && (
-          <Boton as="button" primario onClick={() => navigate("/usuarios")}>
-            Usuarios
-          </Boton>
-        )}
-        {tienePermiso(1) && (
-          <Boton
-            as="button"
-            primario
-            onClick={() => navigate("/mostrar-alumnos-pass")}
-          >
-            Actualizar Contraseña Usuario
-          </Boton>
-        )}
-      </ContenedorBotonRegistro>
-
-      <ContenedorImagen>
-        <ImagenLogo1 src={Permiso} alt="LogoUam" />
-        <ImagenLogo1 src={Prestamo} alt="LogoUam" />
-      </ContenedorImagen>
-      <ContenedorBotonRegistro>
-        {tienePermiso(3) && (
-          <Boton as="button" primario onClick={() => navigate("/permisos")}>
-            Permisos
-          </Boton>
-        )}
-        {tienePermiso(4) && (
-          <Boton as="button" primario onClick={() => navigate("/prestamos")}>
-            Prestamos
-          </Boton>
-        )}
-      </ContenedorBotonRegistro>
-
-      <ContenedorImagen>
-        <ImagenLogo1 src={Perfil} alt="LogoUam" />
-        <ContenedorBotonRegistro>
+        </ContenedorImagen>
+        <ContenedorImagen>
+          <ImagenLogo1 src={Usuario} alt="LogoUam" />
+          {tienePermiso(1) && (
+            <Boton as="button" primario onClick={() => navigate("/usuarios")}>
+              Usuarios
+            </Boton>
+          )}
+        </ContenedorImagen>
+        <ContenedorImagen>
+          <ImagenLogo1 src={ActualizaCredenciales} alt="LogoUam" />
+          {tienePermiso(1) && (
+            <Boton
+              as="button"
+              primario
+              onClick={() => navigate("/mostrar-alumnos-pass")}
+            >
+              Actualizar Contraseña Usuario
+            </Boton>
+          )}
+        </ContenedorImagen>
+        <ContenedorImagen>
+          <ImagenLogo1 src={Permiso} alt="LogoUam" />
+          {tienePermiso(3) && (
+            <Boton as="button" primario onClick={() => navigate("/permisos")}>
+              Permisos
+            </Boton>
+          )}
+        </ContenedorImagen>
+        <ContenedorImagen>
+          <ImagenLogo1 src={Prestamo} alt="LogoUam" />
+          {tienePermiso(4) && (
+            <Boton as="button" primario onClick={() => navigate("/prestamos")}>
+              Prestamos
+            </Boton>
+          )}
+        </ContenedorImagen>
+        <ContenedorImagen>
+          <ImagenLogo1 src={Perfil} alt="LogoUam" />
           <Boton as="button" primario onClick={() => navigate("/perfil")}>
             Perfil
           </Boton>
-        </ContenedorBotonRegistro>
-      </ContenedorImagen>
+        </ContenedorImagen>
+      </ContenedorBotonRegistro>
     </>
   );
 };
