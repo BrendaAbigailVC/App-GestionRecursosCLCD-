@@ -12,7 +12,7 @@ const Contenedor = styled.div`
     margin: auto;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     position: relative;
     z-index: 100;
  

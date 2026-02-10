@@ -12,7 +12,7 @@ export const ContenedorImagen = styled.div`
 
 export const ImagenLogo1 = styled.img`
   width: 100%;
-  max-width: 150px;
+  max-width: 170px;
   height: auto;
 `;
 
