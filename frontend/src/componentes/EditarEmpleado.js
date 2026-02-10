@@ -19,7 +19,7 @@ import {
 } from "../elementos/ElementosDeFormulario";
 import imagen1 from "../imagenes/motasPantera4.png";
 import BotonAtras from "../elementos/BotonAtras";
-
+import FormularioEmpleado from "../elementos/FormularioEmpleado";
 const ImagenMotas = styled.img`
   position: absolute;
   top: 12%;
@@ -50,9 +50,40 @@ const EditarEmpleado = () => {
     estado: "",
     tipo: "",
   });
-
+  const [erroresMensaje, setErroresMensaje] = useState({});
   const [tiposEmpleado, setTiposEmpleado] = useState([]);
   const [estadosEmpleado, setEstadosEmpleado] = useState([]);
+
+  const validarEmpleado = () => {
+    const error = {};
+    if (!formData.nombre.trim()) error.nombre = "El nombre es requerido";
+    if (!formData.apellidoPaterno.trim()) error.apellidoPaterno = "El apellido paterno es requerido";
+    if (!formData.apellidoMaterno.trim()) error.apellidoMaterno = "El apellido materno es requerido";
+    if (formData.password) {
+      if (formData.password.length < 8) {
+        error.password = "La contraseña debe tener al menos 8 caracteres";
+      }
+      if (formData.password !== formData.repeatPassword) {
+        error.password = "Las contraseñas no coinciden";
+        error.repeatPassword = "Las contraseñas no coinciden";
+      }
+    }
+    if (!formData.noEconomico)
+      error.noEconomico = "El número económico es requerido";
+    else if (!/^[1-9][0-9]{4}$/.test(formData.noEconomico))
+      error.noEconomico = "Debe tener exactamente 5 dígitos y no iniciar con 0";
+
+
+    if (!formData.tipo) error.tipo = "Seleccione un cargo";
+    if (!formData.estado) error.estado = "Seleccione un estado";
+
+    if (!formData.correoInstitucional)
+      error.correoInstitucional = "El correo es requerido";
+    else if (!formData.correoInstitucional.endsWith("@cua.uam.mx"))
+      error.correoInstitucional = "Debe terminar en @cua.uam.mx";
+
+    return error;
+  };
 
   useEffect(() => {
     const fetchEmpleado = async () => {
@@ -100,20 +131,14 @@ const EditarEmpleado = () => {
     const { name, value } = e.target;
     if (name === "noEconomico" && value !== "" && !/^\d+$/.test(value)) return;
     setFormData({ ...formData, [name]: value });
+    setErroresMensaje((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (formData.password !== formData.repeatPassword) {
-      alert("Las contraseñas no coinciden.");
-      return;
-    }
-
-    if (!formData.correoInstitucional.endsWith("@cua.uam.mx")) {
-      alert("El correo debe terminar en @cua.uam.mx");
-      return;
-    }
+    const errores = validarEmpleado();
+    setErroresMensaje(errores);
+    if (Object.keys(errores).length > 0) return;
 
     try {
       const empleadoData = {
@@ -165,112 +190,15 @@ const EditarEmpleado = () => {
       <BotonAtras ruta="/mostrar-empleados" />
       <ImagenMotas src={imagen1} alt="MotasUam" />
 
-      <FormularioRegistro onSubmit={handleSubmit}>
-        <FormularioRegistroSecciones>
-          <TitutuloSecciones>Datos de Contacto</TitutuloSecciones>
-          <Subtitulo>
-            Nombre
-            <Input2
-              type="text"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              placeholder="Nombre(s)"
-              required
-            />
-            <Input2
-              type="text"
-              name="apellidoPaterno"
-              value={formData.apellidoPaterno}
-              onChange={handleChange}
-              placeholder="Apellido Paterno"
-              required
-            />
-            <Input2
-              type="text"
-              name="apellidoMaterno"
-              value={formData.apellidoMaterno}
-              onChange={handleChange}
-              placeholder="Apellido Materno"
-              required
-            />
-          </Subtitulo>
-        </FormularioRegistroSecciones>
-
-        <FormularioRegistroSecciones>
-          <TitutuloSecciones>Datos de la Cuenta</TitutuloSecciones>
-          <Input2
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Contraseña (dejar en blanco para no cambiar)"
-          />
-          <Input2
-            type="password"
-            name="repeatPassword"
-            value={formData.repeatPassword}
-            onChange={handleChange}
-            placeholder="Repetir Contraseña"
-          />
-        </FormularioRegistroSecciones>
-
-        <FormularioRegistroSecciones>
-          <TitutuloSecciones>Datos del Empleado</TitutuloSecciones>
-          <Input2
-            type="text"
-            name="noEconomico"
-            value={formData.noEconomico}
-            onChange={handleChange}
-            placeholder="No Económico"
-            required
-          />
-          <Input2
-            type="email"
-            name="correoInstitucional"
-            value={formData.correoInstitucional}
-            onChange={handleChange}
-            placeholder="Correo Institucional"
-            required
-          />
-
-          <label>Estado:</label>
-          <Select
-            name="estado"
-            value={formData.estado}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccione estado</option>
-            {estadosEmpleado.map((estado) => (
-              <option key={estado.id} value={estado.id}>
-                {estado.nombre}
-              </option>
-            ))}
-          </Select>
-
-          <label>Tipo:</label>
-          <Select
-            name="tipo"
-            value={formData.tipo}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccione tipo</option>
-            {tiposEmpleado.map((tipo) => (
-              <option key={tipo.id} value={tipo.id}>
-                {tipo.nombre}
-              </option>
-            ))}
-          </Select>
-        </FormularioRegistroSecciones>
-
-        <ContenedorBoton>
-          <Boton as="button" type="submit">
-            Actualizar Datos
-          </Boton>
-        </ContenedorBoton>
-      </FormularioRegistro>
+      <FormularioEmpleado
+        formData={formData}
+        erroresMensaje={erroresMensaje}
+        handleChange={handleChange}
+        handleSubmit={handleSubmit}
+        modo="Editar"
+        tiposEmpleado={tiposEmpleado}
+        estadosEmpleado={estadosEmpleado}
+      />
     </>
   );
 };
