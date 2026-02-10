@@ -19,6 +19,7 @@ import {
 } from "../elementos/ElementosDeFormulario";
 import imagen1 from "../imagenes/motasPantera4.png";
 import BotonAtras from "../elementos/BotonAtras";
+import MensajeConError from "../elementos/MensajeError";
 
 const ImagenMotas = styled.img`
   position: absolute;
@@ -37,7 +38,7 @@ const ImagenMotas = styled.img`
 
 const RegistrarAlumno = () => {
   const navigate = useNavigate();
-
+  const [erroresMensaje, setErroresMensaje] = useState({});
   const [formData, setFormData] = useState({
     matricula: "",
     password: "",
@@ -53,50 +54,74 @@ const RegistrarAlumno = () => {
     observaciones: "",
   });
 
+  const validarAlumno = (data) => {
+    const error = {};
+
+    if (!data.nombre.trim()) { error.nombre = "El nombre es requerido"; }
+    if (!data.apellidop.trim()) { error.apellidop = "El apellido paterno es requerido"; }
+    if (!data.apellidom.trim()) { error.apellidom = "El apellido materno es requerido"; }
+
+    if (!data.password) { 
+      error.password = "La contraseña es requerida."; 
+    } else if (data.password.length < 8) {
+      error.password = "La contraseña debe tener al menos 8 caracteres.";
+    } 
+
+    if (data.password && data.repeatPassword && data.password !== data.repeatPassword) {
+      error.repeatPassword = "Las contraseñas no coinciden";
+    }
+
+    if (!data.correoinstitucional) error.correoinstitucional = "El correo es requerido";
+    else if (!data.correoinstitucional.endsWith("@cua.uam.mx")) {
+      error.correoinstitucional = "El correo debe terminar en @cua.uam.mx";
+    }
+
+    if (!data.matricula) { error.matricula = "La matrícula es requerida"; }
+    else if (data.matricula.length !== 10) { error.matricula = "El formato de la matrícula es incorrecto"; }
+
+    if (!data.unidad) { error.unidad = "Seleccione una unidad"; }
+    if (!data.licenciatura) { error.licenciatura = "Seleccione una licenciatura"; }
+    if (!data.estado) { error.estado = "Seleccione el estado del alumno"; }
+
+    return error;
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "matricula" && !/^[0-9]*$/.test(value)) {
       return;
     }
+    let nuevosDatos = { ...formData, [name]: value };
 
     if (name === "licenciatura") {
-      let nuevaDivision = "";
-
       if (["131", "141", "144", "132"].includes(value)) {
-        nuevaDivision = "CNI";
+        nuevosDatos.division = "CNI";
       } else if (["130", "137", "138"].includes(value)) {
-        nuevaDivision = "CCD";
+        nuevosDatos.division = "CCD";
       } else if (["128", "129", "135", "136"].includes(value)) {
-        nuevaDivision = "CSH";
+        nuevosDatos.division = "CSH";
       } else {
-        nuevaDivision = "";
+        nuevosDatos.division = "";
       }
-
-      setFormData({ ...formData, [name]: value, division: nuevaDivision });
-      return;
     }
 
-    setFormData({ ...formData, [name]: value });
+    setFormData(nuevosDatos);
+
+    if (erroresMensaje[name]) {
+      setErroresMensaje({
+        ...erroresMensaje,
+        [name]: undefined
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errores = validarAlumno(formData);
+    setErroresMensaje(errores);
 
-    if (formData.password !== formData.repeatPassword) {
-      alert("Las contraseñas no coinciden.");
-      return;
-    }
-
-    if (!formData.correoinstitucional.endsWith("@cua.uam.mx")) {
-      alert("El correo debe terminar en @cua.uam.mx");
-      return;
-    }
-
-    if (formData.matricula.length !== 10) {
-      alert("El formato de la matricula es incorrecto.");
-      return;
-    }
+    if (Object.keys(errores).length > 0) { return; }
 
     try {
       const response = await fetch("http://148.206.162.62:4000/alumno", {
@@ -142,24 +167,27 @@ const RegistrarAlumno = () => {
               value={formData.nombre}
               onChange={handleChange}
               placeholder="Nombre(s)"
-              required
+              error={erroresMensaje.nombre}
             />
+            <MensajeConError error={erroresMensaje.nombre} />
             <Input2
               type="text"
               name="apellidop"
               value={formData.apellidop}
               onChange={handleChange}
               placeholder="Apellido Paterno"
-              required
+              error={erroresMensaje.apellidop}
             />
+            <MensajeConError error={erroresMensaje.apellidop} />
             <Input2
               type="text"
               name="apellidom"
               value={formData.apellidom}
               onChange={handleChange}
               placeholder="Apellido Materno"
-              required
+              error={erroresMensaje.apellidom}
             />
+            <MensajeConError error={erroresMensaje.apellidom} />
           </Subtitulo>
         </FormularioRegistroSecciones>
 
@@ -171,16 +199,18 @@ const RegistrarAlumno = () => {
             value={formData.password}
             onChange={handleChange}
             placeholder="Contraseña"
-            required
+            error={erroresMensaje.password}
           />
+          <MensajeConError error={erroresMensaje.password} />
           <Input2
             type="password"
             name="repeatPassword"
             value={formData.repeatPassword}
             onChange={handleChange}
             placeholder="Repetir Contraseña"
-            required
+            error={erroresMensaje.repeatPassword}
           />
+          <MensajeConError error={erroresMensaje.repeatPassword} />
         </FormularioRegistroSecciones>
 
         <FormularioRegistroSecciones>
@@ -191,13 +221,14 @@ const RegistrarAlumno = () => {
             value={formData.matricula}
             onChange={handleChange}
             placeholder="Matrícula"
-            required
+            error={erroresMensaje.matricula}
           />
+          <MensajeConError error={erroresMensaje.matricula} />
           <Select
             name="unidad"
             value={formData.unidad}
             onChange={handleChange}
-            required
+            error={erroresMensaje.unidad}
           >
             <option value="">Seleccione Unidad</option>
             <option value="1">Azcapotzalco</option>
@@ -206,11 +237,12 @@ const RegistrarAlumno = () => {
             <option value="4">Cuajimalpa</option>
             <option value="5">Lerma</option>
           </Select>
+          <MensajeConError error={erroresMensaje.unidad} />
           <Select
             name="licenciatura"
             value={formData.licenciatura}
             onChange={handleChange}
-            required
+            error={erroresMensaje.licenciatura}
           >
             <option value="">Seleccione Licenciatura</option>
             <option value="131">Ingeniería en Computación</option>
@@ -225,7 +257,7 @@ const RegistrarAlumno = () => {
             <option value="135">Estudios Socioterritoriales</option>
             <option value="136">Humanidades</option>
           </Select>
-
+          <MensajeConError error={erroresMensaje.licenciatura} />
           <Input2
             type="text"
             name="division"
@@ -238,12 +270,13 @@ const RegistrarAlumno = () => {
             name="estado"
             value={formData.estado}
             onChange={handleChange}
-            required
+            error={erroresMensaje.estado}
           >
             <option value="">Seleccione Estado</option>
             <option value="1">Inscrito</option>
             <option value="2">No inscrito</option>
           </Select>
+          <MensajeConError error={erroresMensaje.estado} />
           <Input2
             type="text"
             name="observaciones"
@@ -257,8 +290,9 @@ const RegistrarAlumno = () => {
             value={formData.correoinstitucional}
             onChange={handleChange}
             placeholder="Correo Institucional"
-            required
+            error={erroresMensaje.correoinstitucional}
           />
+          <MensajeConError error={erroresMensaje.correoinstitucional} />
         </FormularioRegistroSecciones>
 
         <ContenedorBoton>
