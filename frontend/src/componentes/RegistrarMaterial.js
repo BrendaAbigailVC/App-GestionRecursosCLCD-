@@ -13,7 +13,7 @@ import {
   FormularioRegistro,
 } from "../elementos/ElementosDeFormulario";
 import imagen1 from "../imagenes/motasPantera4.png";
-
+import MensajeConError from "../elementos/MensajeError";
 const ImagenMotas = styled.img`
   position: absolute;
   top: 12%;
@@ -30,6 +30,7 @@ const ImagenMotas = styled.img`
 `;
 
 const RegistrarMaterial = () => {
+  const [erroresMensaje, setErroresMensaje] = useState({});
   const [formData, setFormData] = useState({
     inventarioUAM: "",
     inventarioCoordinacion: "",
@@ -43,6 +44,37 @@ const RegistrarMaterial = () => {
     descripcion: "",
   });
 
+  const validarMaterial = (data = formData) => {
+    const error = {};
+
+    if (!data.inventarioUAM.trim()) error.inventarioUAM = "El inventario UAM es obligatorio";
+
+    if (!data.inventarioCoordinacion.trim()) error.inventarioCoordinacion = "El inventario de coordinación es obligatorio";
+
+    if (!data.marca.trim()) error.marca = "La marca es obligatoria";
+
+    if (!data.modelo.trim()) error.modelo = "El modelo es obligatorio";
+
+    if (!data.numeroSerie.trim()) error.numeroSerie = "El número de serie es obligatorio";
+    else if (data.numeroSerie.length < 5) error.numeroSerie = "El número de serie debe tener al menos 5 dígitos";
+
+    if (!data.nombreMaterial.trim()) error.nombreMaterial = "El nombre del material es obligatorio";
+
+    if (!data.tipo) error.tipo = "Selecciona un tipo de material";
+
+    if (data.tipo !== "1") {
+      if (!data.cantidad)
+        error.cantidad = "La cantidad es obligatoria";
+      else if (parseInt(data.cantidad) <= 0)
+        error.cantidad = "La cantidad debe ser mayor a 0";
+    }
+
+    if (!data.descripcion.trim())
+      error.descripcion = "La descripción es obligatoria";
+
+    return error;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -54,45 +86,53 @@ const RegistrarMaterial = () => {
       return;
     }
 
+    let nuevosDatos = { ...formData, [name]: value };
+
     if (name === "cantidad") {
       const cantidadNum = value ? parseInt(value) : 0;
-      setFormData((prev) => ({
-        ...prev,
+      nuevosDatos = {
+        ...formData,
         cantidad: value,
         estado: cantidadNum > 0 ? 0 : 1,
-      }));
-      return;
+      };
     }
 
     if (name === "tipo") {
       if (value === "0") {
-        setFormData((prev) => ({
-          ...prev,
+        nuevosDatos = {
+          ...formData,
           tipo: value,
           cantidad: "1",
           estado: 0,
-        }));
+        };
       } else {
-        setFormData((prev) => ({
-          ...prev,
+        nuevosDatos = {
+          ...formData,
           tipo: value,
-        }));
+        };
       }
-      return;
     }
 
-    setFormData({ ...formData, [name]: value });
+    setFormData(nuevosDatos);
+    const errores = validarMaterial(nuevosDatos);
+    setErroresMensaje((prev) => ({
+      ...prev,
+      [name]: errores[name],
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errores = validarMaterial();
+    setErroresMensaje(errores);
+     if (Object.keys(errores).length > 0) { return; }
 
-    for (const campo in formData) {
+    /*for (const campo in formData) {
       if (formData[campo] === "" || formData[campo] === null) {
         alert(`Por favor, completa el campo: ${campo}`);
         return;
       }
-    }
+    }*/
 
     try {
       const response = await fetch("http://148.206.162.62:4000/material", {
@@ -157,31 +197,36 @@ const RegistrarMaterial = () => {
             name="inventarioUAM"
             value={formData.inventarioUAM}
             onChange={handleChange}
-            required
+            error={erroresMensaje.inventarioUAM}
           />
+           <MensajeConError error={erroresMensaje.inventarioUAM} />
           Inventario Coordinación
           <Input2
             type="text"
             name="inventarioCoordinacion"
             value={formData.inventarioCoordinacion}
             onChange={handleChange}
-            required
+            error={erroresMensaje.inventarioCoordinacion}
           />
+          <MensajeConError error={erroresMensaje.inventarioCoordinacion} />
           Marca
           <Input2
             type="text"
             name="marca"
             value={formData.marca}
             onChange={handleChange}
-            required
+            error={erroresMensaje.marca}
           />
+          <MensajeConError error={erroresMensaje.marca} />
           Modelo
           <Input2
             type="text"
             name="modelo"
             value={formData.modelo}
             onChange={handleChange}
-            required
+            error={erroresMensaje.modelo}
+          />
+          <MensajeConError error={erroresMensaje.modelo}
           />
           Número de Serie
           <Input2
@@ -189,16 +234,18 @@ const RegistrarMaterial = () => {
             name="numeroSerie"
             value={formData.numeroSerie}
             onChange={handleChange}
-            required
+            error={erroresMensaje.numeroSerie}
           />
+          <MensajeConError error={erroresMensaje.numeroSerie} />
           Nombre del Material
           <Input2
             type="text"
             name="nombreMaterial"
             value={formData.nombreMaterial}
             onChange={handleChange}
-            required
+            error={erroresMensaje.nombreMaterial}
           />
+          <MensajeConError error={erroresMensaje.nombreMaterial}/>
           Cantidad
           <Input2
             type="text"
@@ -206,8 +253,9 @@ const RegistrarMaterial = () => {
             value={formData.cantidad}
             onChange={handleChange}
             disabled={formData.tipo === "0"}
-            required
+            error={erroresMensaje.cantidad}
           />
+          <MensajeConError error={erroresMensaje.cantidad} />
           Estado
           <Select name="estado" value={formData.estado} disabled>
             <option value="">Seleccione Estado</option>
@@ -219,20 +267,22 @@ const RegistrarMaterial = () => {
             name="tipo"
             value={formData.tipo}
             onChange={handleChange}
-            required
+            error={erroresMensaje.tipo}
           >
             <option value="">Seleccione Tipo</option>
             <option value="0">Inventariado</option>
             <option value="1">Consumible</option>
           </Select>
+          <MensajeConError error={erroresMensaje.tipo} />
           Descripción
           <Input2
             type="text"
             name="descripcion"
             value={formData.descripcion}
             onChange={handleChange}
-            required
+            error={erroresMensaje.descripcion}
           />
+          <MensajeConError error={erroresMensaje.descripcion} />
         </FormularioRegistroSecciones>
 
         <ContenedorBoton>
