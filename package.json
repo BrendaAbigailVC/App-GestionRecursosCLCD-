@@ -16,7 +16,8 @@
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
     "morgan": "^1.10.0",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "sweetalert2": "^11.26.18"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

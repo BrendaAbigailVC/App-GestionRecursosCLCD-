@@ -16,6 +16,8 @@ import {
 import imagen1 from "../imagenes/motasPantera4.png";
 import BotonAtras from "../elementos/BotonAtras";
 import FormularioEmpleado from "../elementos/FormularioEmpleado";
+import Swal from 'sweetalert2';
+
 const ImagenMotas = styled.img`
   position: absolute;
   top: 12%;
@@ -123,11 +125,23 @@ const RegistrarEmpleado = () => {
 
       if (!response.ok) throw new Error();
       //console.log("Empleado registrado:", data);
-      alert("Empleado registrado con éxito");
+      Swal.fire({
+        icon: 'success',
+        title: 'Empleado registrado con éxito',
+        text: 'El empleado se registro correctamente',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
       navigate("/registro-usuarios");
     } catch (error) {
       console.error("Error al registrar:", error);
-      alert("Error al registrar al Empleado");
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al registrar',
+        text: 'Ocurrió un problema al registrar al empleado',
+        confirmButtonText: 'Aceptar'
+      });
     }
   };
 

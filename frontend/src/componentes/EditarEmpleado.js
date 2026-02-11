@@ -20,6 +20,7 @@ import {
 import imagen1 from "../imagenes/motasPantera4.png";
 import BotonAtras from "../elementos/BotonAtras";
 import FormularioEmpleado from "../elementos/FormularioEmpleado";
+import Swal from 'sweetalert2';
 const ImagenMotas = styled.img`
   position: absolute;
   top: 12%;
@@ -162,16 +163,28 @@ const EditarEmpleado = () => {
       });
 
       if (response.ok) {
-        alert("Datos del empleado actualizados con éxito");
+        Swal.fire({
+          icon: 'success',
+          title: 'Actualización exitosa',
+          text: 'Datos actualizados correctamente',
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
+
         navigate("/mostrar-empleados");
       } else {
         const errorData = await response.json();
         console.error("Error al actualizar:", errorData);
-        alert("Error al actualizar empleado");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al editar',
+          text: 'Ocurrió un problema al editar empleado',
+          confirmButtonText: 'Aceptar'
+        });
       }
     } catch (error) {
       console.error("Error al enviar solicitud PUT:", error);
-      alert("Ocurrió un error al actualizar empleado");
     }
   };
 

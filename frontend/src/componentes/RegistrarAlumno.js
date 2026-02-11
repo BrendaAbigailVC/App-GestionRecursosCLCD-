@@ -20,6 +20,7 @@ import {
 import imagen1 from "../imagenes/motasPantera4.png";
 import BotonAtras from "../elementos/BotonAtras";
 import MensajeConError from "../elementos/MensajeError";
+import Swal from 'sweetalert2';
 
 const ImagenMotas = styled.img`
   position: absolute;
@@ -61,11 +62,11 @@ const RegistrarAlumno = () => {
     if (!data.apellidop.trim()) { error.apellidop = "El apellido paterno es requerido"; }
     if (!data.apellidom.trim()) { error.apellidom = "El apellido materno es requerido"; }
 
-    if (!data.password) { 
-      error.password = "La contraseña es requerida."; 
+    if (!data.password) {
+      error.password = "La contraseña es requerida.";
     } else if (data.password.length < 8) {
       error.password = "La contraseña debe tener al menos 8 caracteres.";
-    } 
+    }
 
     if (data.password && data.repeatPassword && data.password !== data.repeatPassword) {
       error.repeatPassword = "Las contraseñas no coinciden";
@@ -132,11 +133,23 @@ const RegistrarAlumno = () => {
 
       const data = await response.json();
       console.log("Alumno registrado:", data);
-      alert("Alumno registrado con éxito");
+      Swal.fire({
+        icon: 'success',
+        title: 'Alumno registrado con éxito',
+        text: 'El alumno se registro correctamente',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
       navigate("/registro-usuarios");
     } catch (error) {
       console.error("Error al registrar:", error);
-      alert("Error al registrar al alumno");
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al registrar',
+        text: 'Ocurrió un problema al registrar al alumno',
+        confirmButtonText: 'Aceptar'
+      });
     }
   };
 

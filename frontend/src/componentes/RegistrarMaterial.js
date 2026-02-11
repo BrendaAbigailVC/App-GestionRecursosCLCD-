@@ -14,6 +14,7 @@ import {
 } from "../elementos/ElementosDeFormulario";
 import imagen1 from "../imagenes/motasPantera4.png";
 import MensajeConError from "../elementos/MensajeError";
+import Swal from 'sweetalert2';
 const ImagenMotas = styled.img`
   position: absolute;
   top: 12%;
@@ -125,7 +126,7 @@ const RegistrarMaterial = () => {
     e.preventDefault();
     const errores = validarMaterial();
     setErroresMensaje(errores);
-     if (Object.keys(errores).length > 0) { return; }
+    if (Object.keys(errores).length > 0) { return; }
 
     /*for (const campo in formData) {
       if (formData[campo] === "" || formData[campo] === null) {
@@ -154,22 +155,34 @@ const RegistrarMaterial = () => {
         throw new Error(errorData.error || "Error al registrar material");
       }
 
-      alert("Material registrado con éxito");
+      Swal.fire({
+        icon: 'success',
+        title: 'Material registrado con éxito',
+        text: 'El material se registro correctamente',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
       setFormData({
-      inventarioUAM: "",
-      inventarioCoordinacion: "",
-      marca: "",
-      modelo: "",
-      numeroSerie: "",
-      estado: "",
-      nombreMaterial: "",
-      cantidad: "",
-      tipo: "",
-      descripcion: "",
-    });
+        inventarioUAM: "",
+        inventarioCoordinacion: "",
+        marca: "",
+        modelo: "",
+        numeroSerie: "",
+        estado: "",
+        nombreMaterial: "",
+        cantidad: "",
+        tipo: "",
+        descripcion: "",
+      });
     } catch (error) {
       console.error("Error al registrar material:", error.message);
-      alert(`Hubo un error al registrar el material: ${error.message}`);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al registrar',
+        text: 'Ocurrió un problema al registrar al material',
+        confirmButtonText: 'Aceptar'
+      });
     }
   };
 
@@ -199,7 +212,7 @@ const RegistrarMaterial = () => {
             onChange={handleChange}
             error={erroresMensaje.inventarioUAM}
           />
-           <MensajeConError error={erroresMensaje.inventarioUAM} />
+          <MensajeConError error={erroresMensaje.inventarioUAM} />
           Inventario Coordinación
           <Input2
             type="text"
@@ -245,7 +258,7 @@ const RegistrarMaterial = () => {
             onChange={handleChange}
             error={erroresMensaje.nombreMaterial}
           />
-          <MensajeConError error={erroresMensaje.nombreMaterial}/>
+          <MensajeConError error={erroresMensaje.nombreMaterial} />
           Cantidad
           <Input2
             type="text"
