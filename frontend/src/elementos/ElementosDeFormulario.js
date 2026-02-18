@@ -62,21 +62,21 @@ const ContenedorBoton = styled.div`
 
 const FormularioRegistro = styled.form`
   padding:5%;
-  width:90%;
+  width: ${props => props.$ancho || "90%"};
   margin-top: -5% ;
   
 `;
 
 const FormularioRegistroSecciones = styled.form`
   padding: 3%;
-  width: 86%;
+  width: ${props => props.$ancho || "86%"};
   border: 2px solid rgb(240, 130, 0); /* Corregido */
   border-radius: 10px;
-  margin:2%
+  margin:2%;
    z-index: 1; /* Asegura que esté por encima de la imagen */
     background-color: white; /* Asegura visibilidad clara */
-    
 `;
+
 const Input2 = styled.input`
     padding: 1%;
     font-size: 16px;

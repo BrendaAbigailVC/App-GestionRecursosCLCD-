@@ -13,6 +13,8 @@ import {
   Select,
   ContenedorBoton,
 } from "../elementos/ElementosDeFormulario";
+import MensajeConError from "../elementos/MensajeError"
+import Swal from "sweetalert2";
 
 const ModalFondo = styled.div`
   position: fixed;
@@ -78,6 +80,125 @@ const InputBusqueda = styled.input`
   font-size: 16px;
 `;
 
+const SeccionBloque = styled.div`
+  opacity: ${props => props.bloqueado ? 0.5 : 1};
+  pointer-events: ${props => props.bloqueado ? "none" : "auto"};
+  transition: all 0.3s ease;
+`;
+
+const ResumenBox = styled.div`
+  background: #eaf4ff;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+const ContenedorAcordeon = styled.div`
+  width: 90%;
+  margin: 20px auto;
+`;
+
+const HeaderSeccion = styled.div`
+  background: #5d9cec;
+  color: white;
+  padding: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 6px;
+  margin-top: 10px;
+  opacity: ${props => props.bloqueado ? 0.6 : 1};
+  pointer-events: ${props => props.bloqueado ? "none" : "auto"};
+`;
+
+const ContenidoSeccion = styled.div`
+  overflow: hidden;
+  transition: all 0.3s ease;
+  max-height: ${props => props.abierto ? "2000px" : "0"};
+  padding: ${props => props.abierto ? "20px" : "0 20px"};
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+`;
+
+const ContenedorTablaScrollable = styled.div`
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+`;
+
+const ControlCantidad = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+`;
+
+const BotonCantidad = styled.button`
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #5d9cec;
+  background: white;
+  cursor: pointer;
+  font-weight: bold;
+
+  &:hover {
+    background: #5d9cec;
+    color: white;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`;
+
+const NumeroCantidad = styled.span`
+  min-width: 25px;
+  text-align: center;
+  font-weight: 600;
+`;
+
+const LayoutPrincipal = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1px;
+  width: 90%;
+  margin: auto;
+`;
+
+
+const ResumenLateral = styled.div`
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 10px;
+  height: fit-content;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  position: sticky;
+  top: 24px;
+  font-size: 14px;
+  border: 1px solid #f0f0f0;
+`;
+
+const ItemResumen = styled.div`
+  border-bottom: 1px solid #f0f0f0;
+  padding: 6px 0;
+  font-size: 13px;
+`;
+
+const TotalResumen = styled.div`
+  margin-top: 15px;
+  font-weight: bold;
+  font-size: 16px;
+`;
+
+
 const RegistrarPrestamo = () => {
   const navigate = useNavigate();
   const idEmpleado = localStorage.getItem("idUsuario");
@@ -87,7 +208,11 @@ const RegistrarPrestamo = () => {
   const [materiales, setMateriales] = useState([]);
   const [busquedaMaterial, setBusquedaMaterial] = useState("");
   const [carrito, setCarrito] = useState({});
+  const [idAlumno, setIdAlumno] = useState("");
+  const [idPrestamo, setIdPrestamo] = useState("");
   const [mostrarVistaPrevia, setMostrarVistaPrevia] = useState(false);
+  const [erroresMensaje, setErroresMensaje] = useState({});
+  const [seccionActiva, setSeccionActiva] = useState("alumno");
 
   const [datosPrestamo, setDatosPrestamo] = useState({
     fechaPrestamo: "",
@@ -98,8 +223,6 @@ const RegistrarPrestamo = () => {
     tipoPrestamo: "",
   });
 
-  const [idAlumno, setIdAlumno] = useState("");
-  const [idPrestamo, setIdPrestamo] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,14 +250,16 @@ const RegistrarPrestamo = () => {
     fetchData();
   }, [idEmpleado]);
 
+  const alumnoSeleccionado = alumnos.find(a => a.id === idAlumno);
+  const hayMaterial = Object.values(carrito).some(c => c > 0);
+  const hayDisponibles = materiales.some(m => m.cantidad > 0);
+
   useEffect(() => {
-    if (datosPrestamo.tipoPrestamo === "0") {
-      setDatosPrestamo((prev) => ({
-        ...prev,
-        fechaDevolucion: prev.fechaPrestamo,
-      }));
+    if (idAlumno) {
+      setSeccionActiva("materiales");
     }
-  }, [datosPrestamo.tipoPrestamo, datosPrestamo.fechaPrestamo]);
+  }, [idAlumno]);
+
 
   const cambiarCantidad = (id, cantidad) => {
     const material = materiales.find((m) => m.id === id);
@@ -145,23 +270,24 @@ const RegistrarPrestamo = () => {
   };
 
   const validarCampos = () => {
-    if (
-      !idAlumno ||
-      !datosPrestamo.fechaPrestamo ||
-      !datosPrestamo.fechaDevolucion ||
-      !datosPrestamo.tipoPrestamo ||
-      Object.keys(carrito).length === 0
-    ) {
-      alert("Todos los campos son obligatorios.");
-      return false;
-    }
+    let errores = {};
+
+    if (!idAlumno) errores.general = "Selecciona un alumno.";
+    if (!hayMaterial) errores.carrito = "Agrega al menos un material.";
+    if (!datosPrestamo.tipoPrestamo) errores.tipoPrestamo = "Selecciona tipo.";
+    if (!datosPrestamo.uea) errores.uea = "UEA obligatoria.";
+    if (!datosPrestamo.grupo) errores.grupo = "Grupo obligatorio.";
+    if (!datosPrestamo.fechaPrestamo) errores.fechaPrestamo = "La fecha de préstamo es obligatoria.";
+    if (!datosPrestamo.fechaDevolucion) errores.fechaDevolucion = "La fecha de devolución es obligatoria.";
+
 
     if (
+      datosPrestamo.fechaPrestamo &&
+      datosPrestamo.fechaDevolucion &&
       new Date(datosPrestamo.fechaDevolucion) <
       new Date(datosPrestamo.fechaPrestamo)
     ) {
-      alert("La fecha de devolución no puede ser anterior a la de préstamo.");
-      return false;
+      errores.fechaDevolucion = "La fecha de devolución no puede ser anterior a la de préstamo.";
     }
 
     for (const [id, cantidad] of Object.entries(carrito)) {
@@ -171,18 +297,16 @@ const RegistrarPrestamo = () => {
         cantidad < 1 ||
         cantidad > material.cantidad
       ) {
-        alert(
-          `La cantidad para el material "${
-            material?.nombrematerial || id
-          }" debe ser al menos 1 y no mayor que la disponible (${
-            material?.cantidad || 0
+        errores.carrito = (
+          `La cantidad para el material "${material?.nombrematerial || id
+          }" debe ser al menos 1 y no mayor que la disponible (${material?.cantidad || 0
           }).`
         );
-        return false;
+        break;
       }
     }
-
-    return true;
+    setErroresMensaje(errores);
+    return Object.keys(errores).length === 0;
   };
 
   const generarVistaPrevia = () => {
@@ -215,19 +339,22 @@ const RegistrarPrestamo = () => {
           .map(({ idMaterial, cantidad }) => {
             const mat = materiales.find((m) => m.id === idMaterial);
             const nombre = mat?.nombrematerial || "Desconocido";
-            return `• ${nombre} (ID: ${idMaterial}): ${cantidad} ${
-              cantidad === 1 ? "unidad" : "unidades"
-            }`;
+            return `• ${nombre} (ID: ${idMaterial}): ${cantidad} ${cantidad === 1 ? "unidad" : "unidades"
+              }`;
           })
           .join("\n");
 
-        alert(
-          `Préstamo registrado exitosamente\n\n` +
-            `Matrícula: ${alumno?.matricula}\n` +
+        Swal.fire({
+          icon: 'success',
+          title: 'Préstamo registrado exitosamente',
+          text: `Matrícula: ${alumno?.matricula}\n` +
             `Fecha de inicio: ${datosPrestamo.fechaPrestamo}\n` +
             `Fecha de devolución: ${datosPrestamo.fechaDevolucion}\n\n` +
-            `Materiales prestados:\n${materialesTexto}`
-        );
+            `Materiales prestados:\n${materialesTexto}`,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
 
         setIdAlumno("");
         setDatosPrestamo((prev) => ({
@@ -263,7 +390,6 @@ const RegistrarPrestamo = () => {
     })
     .slice(0, 3);
 
-  // Filtramos materiales para que solo aparezcan con cantidad > 0 y que coincidan con la búsqueda
   const materialesFiltrados = materiales
     .filter(
       (m) =>
@@ -272,8 +398,51 @@ const RegistrarPrestamo = () => {
           m.nombrematerial.toLowerCase().includes(busquedaMaterial.toLowerCase()))
     );
 
+  useEffect(() => {
+    if (datosPrestamo.tipoPrestamo === "0") {
+      setDatosPrestamo((prev) => ({
+        ...prev,
+        fechaDevolucion: prev.fechaPrestamo,
+      }));
+    }
+  }, [datosPrestamo.tipoPrestamo, datosPrestamo.fechaPrestamo]);
+
+
+  const aumentarCantidad = (id) => {
+    setCarrito((prev) => ({
+      ...prev,
+      [id]: (prev[id] || 0) + 1,
+    }));
+  };
+
+  const disminuirCantidad = (id) => {
+    setCarrito((prev) => {
+      const nuevaCantidad = (prev[id] || 0) - 1;
+
+      if (nuevaCantidad <= 0) {
+        const nuevoCarrito = { ...prev };
+        delete nuevoCarrito[id];
+        return nuevoCarrito;
+      }
+
+      return {
+        ...prev,
+        [id]: nuevaCantidad,
+      };
+    });
+  };
+
+  const totalMateriales = Object.keys(carrito).length;
+
+  const totalUnidades = Object.values(carrito).reduce(
+    (acc, cantidad) => acc + cantidad,
+    0
+  );
+
+
   return (
     <>
+
       <Helmet>
         <title>Registrar Préstamo</title>
       </Helmet>
@@ -283,209 +452,321 @@ const RegistrarPrestamo = () => {
         </ContenedorHeader>
       </Header>
       <BotonAtras ruta="/prestamos" />
-      <FormularioRegistro>
-        <FormularioRegistroSecciones>
-          <TitutuloSecciones>Datos del Préstamo</TitutuloSecciones>
-          Buscar Matrícula
-          <InputBusqueda
-            type="text"
-            value={busquedaAlumno}
-            onChange={(e) => {
-              setBusquedaAlumno(e.target.value);
-              setIdAlumno("");
-            }}
-            placeholder="Buscar por matrícula, nombre o apellido"
-          />
-          {busquedaAlumno && !idAlumno && (
-            <div
-              style={{
-                backgroundColor: "#fff",
-                border: "1px solid #ccc",
-                borderRadius: "5px",
-                maxHeight: "150px",
-                overflowY: "auto",
-                marginBottom: "1rem",
-              }}
-            >
-              {alumnosFiltrados.map((a) => (
-                <div
-                  key={a.id}
-                  onClick={() => {
-                    setIdAlumno(a.id);
-                    setBusquedaAlumno(
-                      `${a.matricula} - ${a.nombre} ${a.apellidopaterno}`
-                    );
-                  }}
-                  style={{
-                    padding: "10px",
-                    cursor: "pointer",
-                    borderBottom: "1px solid #eee",
-                  }}
-                >
-                  {a.matricula} - {a.nombre} {a.apellidopaterno} {a.apellidomaterno}
-                </div>
-              ))}
-            </div>
-          )}
-          {idAlumno && (
-            <div style={{ marginBottom: "1rem" }}>
-              <strong>Alumno seleccionado:</strong>{" "}
-              {alumnos.find((a) => a.id === idAlumno)?.nombre}{" "}
-              {alumnos.find((a) => a.id === idAlumno)?.apellidopaterno}
-              <button
-                onClick={() => {
-                  setIdAlumno("");
-                  setBusquedaAlumno("");
-                }}
-                style={{
-                  marginLeft: "10px",
-                  padding: "2px 8px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                }}
+      <LayoutPrincipal>
+        <FormularioRegistro $ancho="100">
+          <FormularioRegistroSecciones $ancho="100%">
+            <ContenedorAcordeon>
+              <HeaderSeccion
+                onClick={() =>
+                  setSeccionActiva(
+                    seccionActiva === "alumno" ? "" : "alumno"
+                  )
+                }
               >
-                Cambiar
-              </button>
-            </div>
-          )}
-          Fecha inicio
-          <Input2
-            type="date"
-            name="fechaPrestamo"
-            value={datosPrestamo.fechaPrestamo}
-            disabled
-          />
-          Fecha devolución
-          <Input2
-            type="date"
-            name="fechaDevolucion"
-            value={datosPrestamo.fechaDevolucion}
-            onChange={(e) =>
-              setDatosPrestamo({
-                ...datosPrestamo,
-                fechaDevolucion: e.target.value,
-              })
-            }
-            disabled={datosPrestamo.tipoPrestamo === "0"}
-          />
-          No. Económico
-          <Input2 type="text" value={idEmpleado} disabled />
-          ID Préstamo
-          <Input2 type="text" value={idPrestamo} disabled />
-          UEA
-          <Input2
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            name="uea"
-            value={datosPrestamo.uea}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (/^\d*$/.test(value)) {
-                setDatosPrestamo({ ...datosPrestamo, uea: value });
-              }
-            }}
-          />
-          Grupo
-          <Input2
-            type="text"
-            name="grupo"
-            value={datosPrestamo.grupo}
-            onChange={(e) =>
-              setDatosPrestamo({ ...datosPrestamo, grupo: e.target.value })
-            }
-          />
-          Observaciones
-          <Input2
-            type="text"
-            name="observaciones"
-            value={datosPrestamo.observaciones}
-            onChange={(e) =>
-              setDatosPrestamo({
-                ...datosPrestamo,
-                observaciones: e.target.value,
-              })
-            }
-          />
-          Tipo de Préstamo
-          <Select
-            name="tipoPrestamo"
-            value={datosPrestamo.tipoPrestamo}
-            onChange={(e) =>
-              setDatosPrestamo({
-                ...datosPrestamo,
-                tipoPrestamo: e.target.value,
-              })
-            }
-          >
-            <option value="">Seleccione</option>
-            <option value="0">Interno</option>
-            <option value="1">Externo</option>
-          </Select>
-        </FormularioRegistroSecciones>
-
-        <ContenedorBoton>
-          <Boton
-            as="button"
-            primario
-            onClick={(e) => {
-              e.preventDefault();
-              generarVistaPrevia();
-            }}
-          >
-            Generar Préstamo
-          </Boton>
-        </ContenedorBoton>
-      </FormularioRegistro>
-
-      <ContenedorBusqueda>
-        <InputBusqueda
-          type="text"
-          placeholder="Buscar material por ID o nombre"
-          value={busquedaMaterial}
-          onChange={(e) => setBusquedaMaterial(e.target.value)}
-        />
-      </ContenedorBusqueda>
-
-      <Tabla>
-        <EncabezadoTabla>
-          <FilaTabla>
-            <CeldaEncabezado>ID</CeldaEncabezado>
-            <CeldaEncabezado>Nombre</CeldaEncabezado>
-            <CeldaEncabezado>Disponible</CeldaEncabezado>
-            <CeldaEncabezado>Cantidad</CeldaEncabezado>
-          </FilaTabla>
-        </EncabezadoTabla>
-        <CuerpoTabla>
-          {materialesFiltrados.map((m) => (
-            <FilaTabla key={m.id}>
-              <Celda>{m.id}</Celda>
-              <Celda>{m.nombrematerial}</Celda>
-              <Celda>{m.cantidad}</Celda>
-              <Celda>
-                <input
+                1. Alumno
+              </HeaderSeccion>
+              <ContenidoSeccion abierto={seccionActiva === "alumno"}>
+                <InputBusqueda
                   type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={carrito[m.id] || ""}
+                  placeholder="Buscar por matrícula, nombre o apellido"
+                  value={busquedaAlumno}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^\d*$/.test(value)) {
-                      cambiarCantidad(m.id, parseInt(value || "0"));
-                    }
-                  }}
-                  disabled={m.cantidad === 0}
-                  style={{
-                    width: "80px",
-                    textAlign: "center",
-                    backgroundColor: m.cantidad === 0 ? "#f0f0f0" : "white",
+                    setBusquedaAlumno(e.target.value);
+                    setIdAlumno("");
                   }}
                 />
-              </Celda>
-            </FilaTabla>
-          ))}
-        </CuerpoTabla>
-      </Tabla>
+                {busquedaAlumno && !idAlumno && (
+                  <div
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "5px",
+                      maxHeight: "150px",
+                      overflowY: "auto",
+                      marginBottom: "1rem",
+                    }}
+                  >
+                    {alumnosFiltrados.map((a) => (
+                      <div
+                        key={a.id}
+                        onClick={() => {
+                          setIdAlumno(a.id);
+                          setBusquedaAlumno(
+                            `${a.matricula} - ${a.nombre} ${a.apellidopaterno}`
+                          );
+                        }}
+                        style={{
+                          padding: "10px",
+                          cursor: "pointer",
+                          borderBottom: "1px solid #eee",
+                        }}
+                      >
+                        {a.matricula} - {a.nombre} {a.apellidopaterno} {a.apellidomaterno}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {idAlumno && (
+                  <ResumenBox>
+                    <div style={{ marginBottom: "1rem" }}>
+                      <strong>Alumno seleccionado:</strong>{" "}
+                      {alumnos.find((a) => a.id === idAlumno)?.nombre}{" "}
+                      {alumnos.find((a) => a.id === idAlumno)?.apellidopaterno}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIdAlumno("");
+                        setBusquedaAlumno("");
+                      }}
+                      style={{
+                        marginLeft: "10px",
+                        padding: "2px 8px",
+                        fontSize: "12px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Cambiar
+                    </button>
+                  </ResumenBox>
+                )}
+              </ContenidoSeccion>
+              <SeccionBloque bloqueado={!idAlumno}>
+                <HeaderSeccion
+                  bloqueado={!idAlumno}
+                  onClick={() =>
+                    idAlumno &&
+                    setSeccionActiva(
+                      seccionActiva === "materiales" ? "" : "materiales"
+                    )
+                  }
+                >
+                  2. Materiales
+                </HeaderSeccion>
+                <ContenidoSeccion abierto={seccionActiva === "materiales"}>
+                  {!idAlumno && (
+                    <MensajeConError>
+                      Selecciona un alumno para habilitar materiales.
+                    </MensajeConError>
+                  )}
+                  {idAlumno && (
+                    <>
+                      <ContenedorBusqueda>
+                        <InputBusqueda
+                          type="text"
+                          placeholder="Buscar material por ID o nombre"
+                          value={busquedaMaterial}
+                          onChange={(e) => setBusquedaMaterial(e.target.value)}
+                        />
+                      </ContenedorBusqueda>
+                      <ContenedorTablaScrollable>
+                        <Tabla>
+                          <EncabezadoTabla>
+                            <FilaTabla>
+                              <CeldaEncabezado>ID</CeldaEncabezado>
+                              <CeldaEncabezado>Nombre</CeldaEncabezado>
+                              <CeldaEncabezado>Disponible</CeldaEncabezado>
+                              <CeldaEncabezado>Cantidad</CeldaEncabezado>
+                            </FilaTabla>
+                          </EncabezadoTabla>
+                          <CuerpoTabla>
+                            {materialesFiltrados.map((m) => (
+                              <FilaTabla key={m.id}>
+                                <Celda>{m.id}</Celda>
+                                <Celda>{m.nombrematerial}</Celda>
+                                <Celda>{m.cantidad}</Celda>
+                                <Celda>
+                                  <ControlCantidad>
+                                    <BotonCantidad
+                                      type="button"
+                                      onClick={() => disminuirCantidad(m.id)}
+                                      disabled={!carrito[m.id]}
+                                    >
+                                      -
+                                    </BotonCantidad>
+
+                                    <NumeroCantidad>
+                                      {carrito[m.id] || 0}
+                                    </NumeroCantidad>
+
+                                    <BotonCantidad
+                                      type="button"
+                                      onClick={() => aumentarCantidad(m.id)}
+                                      disabled={(carrito[m.id] || 0) >= m.cantidad}
+                                    >
+                                      +
+                                    </BotonCantidad>
+                                  </ControlCantidad>
+
+                                </Celda>
+                              </FilaTabla>
+                            ))}
+                          </CuerpoTabla>
+                        </Tabla>
+                      </ContenedorTablaScrollable>
+                    </>
+                  )}
+                </ContenidoSeccion>
+              </SeccionBloque>
+              <SeccionBloque bloqueado={!hayMaterial}>
+                <HeaderSeccion
+                  bloqueado={!hayMaterial}
+                  onClick={() =>
+                    hayMaterial &&
+                    setSeccionActiva(
+                      seccionActiva === "datos" ? "" : "datos"
+                    )
+                  }
+                >
+                  3. Datos del Préstamo
+                </HeaderSeccion>
+                <ContenidoSeccion abierto={seccionActiva === "datos"}>
+                  {!hayMaterial && idAlumno && (
+                    <MensajeConError>
+                      Agrega al menos un material para continuar.
+                    </MensajeConError>
+                  )}
+                  {hayMaterial && (
+                    <>
+                      No. Económico
+                      <Input2 type="text" value={idEmpleado} disabled />
+                      ID Préstamo
+                      <Input2 type="text" value={idPrestamo} disabled />
+
+                      Tipo de Préstamo
+                      <Select
+                        name="tipoPrestamo"
+                        value={datosPrestamo.tipoPrestamo}
+                        onChange={(e) =>
+                          setDatosPrestamo({
+                            ...datosPrestamo,
+                            tipoPrestamo: e.target.value,
+                          })
+                        }
+                      >
+                        <option value="">Seleccione</option>
+                        <option value="0">Interno</option>
+                        <option value="1">Externo</option>
+                      </Select>
+
+                      <MensajeConError error={erroresMensaje.tipoPrestamo} />
+                      Fecha inicio
+                      <Input2
+                        type="date"
+                        name="fechaPrestamo"
+                        value={datosPrestamo.fechaPrestamo}
+                        disabled
+                      />
+                      Fecha devolución
+                      <Input2
+                        type="date"
+                        name="fechaDevolucion"
+                        value={datosPrestamo.fechaDevolucion}
+                        onChange={(e) =>
+                          setDatosPrestamo({
+                            ...datosPrestamo,
+                            fechaDevolucion: e.target.value,
+                          })
+                        }
+                        disabled={datosPrestamo.tipoPrestamo === "0"}
+                        error={erroresMensaje.fechaDevolucion}
+                      />
+                      <MensajeConError error={erroresMensaje.fechaDevolucion} />
+                      UEA
+                      <Input2
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        name="uea"
+                        value={datosPrestamo.uea}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^\d*$/.test(value)) {
+                            setDatosPrestamo({ ...datosPrestamo, uea: value });
+                          }
+                        }}
+                        error={erroresMensaje.uea}
+                      />
+                      <MensajeConError error={erroresMensaje.uea} />
+                      Grupo
+                      <Input2
+                        type="text"
+                        name="grupo"
+                        value={datosPrestamo.grupo}
+                        onChange={(e) =>
+                          setDatosPrestamo({ ...datosPrestamo, grupo: e.target.value })
+                        }
+                        error={erroresMensaje.grupo}
+                      />
+                      <MensajeConError error={erroresMensaje.grupo} />
+                      Observaciones
+                      <Input2
+                        type="text"
+                        name="observaciones"
+                        value={datosPrestamo.observaciones}
+                        onChange={(e) =>
+                          setDatosPrestamo({
+                            ...datosPrestamo,
+                            observaciones: e.target.value,
+                          })
+                        }
+                      />
+
+                    </>
+                  )}
+                </ContenidoSeccion>
+              </SeccionBloque>
+            </ContenedorAcordeon>
+            <ContenedorBoton>
+              <Boton
+                as="button"
+                primario
+                disabled={!idAlumno || !hayMaterial}
+                onClick={(e) => {
+                  e.preventDefault();
+                  generarVistaPrevia(true);
+                }}
+              >
+                Generar Préstamo
+              </Boton>
+            </ContenedorBoton>
+          </FormularioRegistroSecciones>
+        </FormularioRegistro>
+        <ResumenLateral>
+          <h4>Resumen del Préstamo</h4>
+
+          {!idAlumno && <p>No hay alumno seleccionado.</p>}
+
+          {idAlumno && (
+            <>
+              <p>
+                <strong>Alumno:</strong><br />
+                {alumnoSeleccionado?.nombre} {alumnoSeleccionado?.apellidopaterno}
+              </p>
+
+              <hr />
+
+              {Object.keys(carrito).length === 0 && (
+                <p>No hay materiales seleccionados.</p>
+              )}
+
+              {Object.entries(carrito).map(([idMat, cantidad]) => {
+                const mat = materiales.find((m) => m.id === idMat);
+                return (
+                  <ItemResumen key={idMat}>
+                    {mat?.nombrematerial}<br />
+                    Cantidad: {cantidad}
+                  </ItemResumen>
+                );
+              })}
+
+              <TotalResumen>
+                Total materiales: {totalMateriales}<br />
+                Total unidades: {totalUnidades}
+              </TotalResumen>
+            </>
+          )}
+        </ResumenLateral>
+      </LayoutPrincipal>
 
       {mostrarVistaPrevia && (
         <ModalFondo>
@@ -501,20 +782,17 @@ const RegistrarPrestamo = () => {
             <p>
               <strong>Fecha devolución:</strong> {datosPrestamo.fechaDevolucion}
             </p>
-            <p>
-              <strong>Materiales:</strong>
-              <ul>
-                {Object.entries(carrito).map(([idMat, cantidad]) => {
-                  const mat = materiales.find((m) => m.id === idMat);
-                  return (
-                    <li key={idMat}>
-                      {mat?.nombrematerial || "Desconocido"} (ID: {idMat}) –{" "}
-                      {cantidad}
-                    </li>
-                  );
-                })}
-              </ul>
-            </p>
+            <ul>
+              {Object.entries(carrito).map(([idMat, cantidad]) => {
+                const mat = materiales.find((m) => m.id === idMat);
+                return (
+                  <li key={idMat}>
+                    {mat?.nombrematerial || "Desconocido"} (ID: {idMat}) –{" "}
+                    {cantidad}
+                  </li>
+                );
+              })}
+            </ul>
             <div
               style={{
                 display: "flex",
