@@ -40,6 +40,7 @@ const FinalizarPrestamo = () => {
   const [prestamo, setPrestamo] = useState(null);
   const [materiales, setMateriales] = useState([]);
   const [observacionesDevolucion, setObservacionesDevolucion] = useState("");
+  const [incidencias, setIncidencias] = useState({});
 
   useEffect(() => {
     const idUsuario = localStorage.getItem("idUsuario");
@@ -71,17 +72,17 @@ const FinalizarPrestamo = () => {
   };
 
   const finalizarPrestamo = async () => {
-    if (!window.confirm("¿Deseas finalizar este préstamo?")) return;
+    //if (!window.confirm("¿Deseas finalizar este préstamo?")) return;
+    if (!validarIncidencias()) return;
 
+    const observaciones = generarObservaciones();
     try {
       const res = await fetch(`http://148.206.162.62:4000/finalizar/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-         body: JSON.stringify({
-        observaciones: observacionesDevolucion || "Devolución sin incidencias",
-      }),
+        body: JSON.stringify({ observaciones }),
       });
 
       if (!res.ok) throw new Error("No se pudo finalizar el préstamo.");
@@ -92,6 +93,33 @@ const FinalizarPrestamo = () => {
       console.error(err);
       alert("Hubo un error al finalizar el préstamo.");
     }
+  };
+
+  const validarIncidencias = () => {
+    for (const mat of materiales) {
+      const inc = incidencias[mat.idmaterial];
+      if (!inc) {
+        alert(`Debes indicar el estado del material: ${mat.nombrematerial}`);
+        return false;
+      }
+      if (inc.estado === "mal" && !inc.comentario.trim()) {
+        alert(`Describe el problema del material: ${mat.nombrematerial}`);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const generarObservaciones = () => {
+    return materiales
+      .map((mat) => {
+        const inc = incidencias[mat.idmaterial];
+        if (inc.estado === "bien") {
+          return `${mat.nombrematerial}: sin incidencias`;
+        }
+        return `${mat.nombrematerial}: ${inc.comentario}`;
+      })
+      .join(" | ");
   };
 
   return (
@@ -140,40 +168,72 @@ const FinalizarPrestamo = () => {
             <TablaMateriales>
               <thead>
                 <tr>
-                  <th>ID Material</th>
-                  <th>Nombre</th>
+                  <th>ID</th>
+                  <th>Material</th>
                   <th>Cantidad</th>
+                  <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {materiales.map((mat, index) => (
-                  <tr key={index}>
+                {materiales.map((mat) => (
+                  <tr key={mat.idmaterial}>
                     <td>{mat.idmaterial}</td>
                     <td>{mat.nombrematerial}</td>
                     <td>{mat.cantidad}</td>
+                    <td>
+                      <label>
+                        <input
+                          type="radio"
+                          name={`estado-${mat.idmaterial}`}
+                          checked={incidencias[mat.idmaterial]?.estado === "bien"}
+                          onChange={() =>
+                            setIncidencias({
+                              ...incidencias,
+                              [mat.idmaterial]: { estado: "bien", comentario: "" },
+                            })
+                          }
+                        />
+                        Sin problema
+                      </label>
+                      <label style={{ marginLeft: "1rem" }}>
+                        <input
+                          type="radio"
+                          name={`estado-${mat.idmaterial}`}
+                          checked={incidencias[mat.idmaterial]?.estado === "mal"}
+                          onChange={() =>
+                            setIncidencias({
+                              ...incidencias,
+                              [mat.idmaterial]: { estado: "mal", comentario: "" },
+                            })
+                          }
+                        />
+                        Con incidencia
+                      </label>
+
+                      {incidencias[mat.idmaterial]?.estado === "mal" && (
+                        <Input2
+                          placeholder="Describe el problema"
+                          value={incidencias[mat.idmaterial]?.comentario || ""}
+                          onChange={(e) =>
+                            setIncidencias({
+                              ...incidencias,
+                              [mat.idmaterial]: {
+                                ...incidencias[mat.idmaterial],
+                                comentario: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
-            </TablaMateriales>
-            
-          </FormularioRegistroSecciones>
-          <FormularioRegistroSecciones>
-  <TitutuloSecciones>Observaciones de la devolución</TitutuloSecciones>
 
-  <textarea
-    style={{
-      width: "100%",
-      minHeight: "80px",
-      padding: "0.6rem",
-      borderRadius: "6px",
-      border: "1px solid #ccc",
-      resize: "vertical",
-    }}
-    placeholder="Ej. Mouse devuelto dañado, teclado incompleto, todo correcto, etc."
-    value={observacionesDevolucion}
-    onChange={(e) => setObservacionesDevolucion(e.target.value)}
-  />
-</FormularioRegistroSecciones>
+            </TablaMateriales>
+
+          </FormularioRegistroSecciones>
+
 
 
           <ContenedorBoton>

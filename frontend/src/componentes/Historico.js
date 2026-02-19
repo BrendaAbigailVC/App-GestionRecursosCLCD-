@@ -149,6 +149,7 @@ const Historico = () => {
     return tipo === 0 ? "Interno" : tipo === 1 ? "Externo" : "Desconocido";
   };
 
+
   return (
     <>
       <Helmet>
@@ -190,12 +191,21 @@ const Historico = () => {
             <CeldaEncabezado>Fecha Devolución</CeldaEncabezado>
             <CeldaEncabezado>Tipo de Préstamo</CeldaEncabezado>
             <CeldaEncabezado>Estado</CeldaEncabezado>
+            <CeldaEncabezado>Incidencias</CeldaEncabezado>
+
             <CeldaEncabezado>Opción</CeldaEncabezado>
           </FilaTabla>
         </EncabezadoTabla>
 
         <CuerpoTabla>
           {prestamosFiltrados.map((p) => {
+            const tieneIncidencias =
+              p.estadoprestamo === 1 &&
+              p.observaciones &&
+              p.observaciones
+                .split("|")
+                .some((obs) => !obs.toLowerCase().includes("sin incidencias"));
+
             const fechaDevolucion = p.fechadevolucion
               ? new Date(p.fechadevolucion)
               : null;
@@ -225,6 +235,22 @@ const Historico = () => {
                 <CeldaEstado color={color}>
                   {p.estadoprestamo === 0 ? "Prestado" : "Devuelto"}
                 </CeldaEstado>
+                <CeldaEstado
+                  color={
+                    p.estadoprestamo === 0
+                      ? "gray"
+                      : tieneIncidencias
+                        ? "orange"
+                        : "green"
+                  }
+                >
+                  {p.estadoprestamo === 0
+                    ? "Pendiente"
+                    : tieneIncidencias
+                      ? "Con incidencias"
+                      : "Sin incidencias"}
+                </CeldaEstado>
+
                 <Celda>
                   <Boton onClick={() => navigate(`/mostrar-prestamo/${p.id}`)}>
                     Mostrar Más

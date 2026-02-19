@@ -698,19 +698,6 @@ const RegistrarPrestamo = () => {
                         error={erroresMensaje.grupo}
                       />
                       <MensajeConError error={erroresMensaje.grupo} />
-                      Observaciones
-                      <Input2
-                        type="text"
-                        name="observaciones"
-                        value={datosPrestamo.observaciones}
-                        onChange={(e) =>
-                          setDatosPrestamo({
-                            ...datosPrestamo,
-                            observaciones: e.target.value,
-                          })
-                        }
-                      />
-
                     </>
                   )}
                 </ContenidoSeccion>
