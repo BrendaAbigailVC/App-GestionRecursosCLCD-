@@ -39,6 +39,7 @@ const FinalizarPrestamo = () => {
   const { id } = useParams();
   const [prestamo, setPrestamo] = useState(null);
   const [materiales, setMateriales] = useState([]);
+  const [observacionesDevolucion, setObservacionesDevolucion] = useState("");
 
   useEffect(() => {
     const idUsuario = localStorage.getItem("idUsuario");
@@ -78,6 +79,9 @@ const FinalizarPrestamo = () => {
         headers: {
           "Content-Type": "application/json",
         },
+         body: JSON.stringify({
+        observaciones: observacionesDevolucion || "Devolución sin incidencias",
+      }),
       });
 
       if (!res.ok) throw new Error("No se pudo finalizar el préstamo.");
@@ -129,10 +133,6 @@ const FinalizarPrestamo = () => {
             />
             <Input2 value={`UEA: ${prestamo.uea}`} disabled />
             <Input2 value={`Grupo: ${prestamo.grupo}`} disabled />
-            <Input2
-              value={`Observaciones: ${prestamo.observaciones}`}
-              disabled
-            />
           </FormularioRegistroSecciones>
 
           <FormularioRegistroSecciones>
@@ -155,7 +155,26 @@ const FinalizarPrestamo = () => {
                 ))}
               </tbody>
             </TablaMateriales>
+            
           </FormularioRegistroSecciones>
+          <FormularioRegistroSecciones>
+  <TitutuloSecciones>Observaciones de la devolución</TitutuloSecciones>
+
+  <textarea
+    style={{
+      width: "100%",
+      minHeight: "80px",
+      padding: "0.6rem",
+      borderRadius: "6px",
+      border: "1px solid #ccc",
+      resize: "vertical",
+    }}
+    placeholder="Ej. Mouse devuelto dañado, teclado incompleto, todo correcto, etc."
+    value={observacionesDevolucion}
+    onChange={(e) => setObservacionesDevolucion(e.target.value)}
+  />
+</FormularioRegistroSecciones>
+
 
           <ContenedorBoton>
             <Boton as="button" onClick={finalizarPrestamo}>

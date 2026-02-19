@@ -243,6 +243,8 @@ const getPrestamosPorEmpleado = async (req, res, next) => {
 
 const finalizarPrestamo = async (req, res, next) => {
   const { id } = req.params;
+  const { observaciones } = req.body;
+
 
   const client = await pool.connect();
   try {
@@ -271,10 +273,14 @@ const finalizarPrestamo = async (req, res, next) => {
         [cantidad, idmaterial]
       );
     }
+    const observacionFinal =
+      observaciones && observaciones.trim() !== ""
+        ? observaciones
+        : "Devolución sin incidencias";
 
     await client.query(
-      "UPDATE prestamo SET estadoprestamo = 1, fechaentregado = CURRENT_DATE WHERE id = $1",
-      [id]
+      "UPDATE prestamo SET estadoprestamo = 1, fechaentregado = CURRENT_DATE, observaciones = $2 WHERE id = $1",
+      [id, observacionFinal]
     );
 
     await client.query("COMMIT");
