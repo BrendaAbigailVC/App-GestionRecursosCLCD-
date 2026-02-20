@@ -241,6 +241,14 @@ const getPrestamosPorEmpleado = async (req, res, next) => {
   }
 };
 
+const ESTADOS = {
+  DISPONIBLE: 0,
+  NO_DISPONIBLE: 1,
+  CON_INCIDENCIA: 2,
+  EN_REPARACION: 3,
+  DE_BAJA: 4
+};
+
 const finalizarPrestamo = async (req, res, next) => {
   const { id } = req.params;
   const { observaciones, incidencias } = req.body;
@@ -268,18 +276,23 @@ const finalizarPrestamo = async (req, res, next) => {
     );
 
     for (const { idmaterial, cantidad } of materialesRes.rows) {
+      // actualizamos el estado si hay incidencia
+      if (incidencias && incidencias[idmaterial]?.estado === "mal") {
+        await client.query(
+          "UPDATE material SET estado = $1 WHERE id = $2",
+          [ESTADOS.CON_INCIDENCIA, idmaterial]
+        );
+      } else {
+        // si no hay incidencia ponemos como disponible o dejamos como esta
+        await client.query(
+          "UPDATE material SET estado = $1 WHERE id = $2",
+          [ESTADOS.DISPONIBLE, idmaterial]
+        );
+      }
       await client.query(
         "UPDATE material SET cantidad = cantidad + $1 WHERE id = $2",
         [cantidad, idmaterial]
       );
-
-      if (incidencias && incidencias[idmaterial]?.estado === "mal") {
-        await client.query(
-          "UPDATE material SET estado = 'Con incidencia' WHERE id = $1",
-          [idmaterial]
-        );
-      }
-
     }
     const observacionFinal =
       observaciones && observaciones.trim() !== ""
