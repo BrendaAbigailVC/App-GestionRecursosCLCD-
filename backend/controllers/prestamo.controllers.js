@@ -243,7 +243,7 @@ const getPrestamosPorEmpleado = async (req, res, next) => {
 
 const finalizarPrestamo = async (req, res, next) => {
   const { id } = req.params;
-  const { observaciones } = req.body;
+  const { observaciones, incidencias } = req.body;
 
 
   const client = await pool.connect();
@@ -272,6 +272,14 @@ const finalizarPrestamo = async (req, res, next) => {
         "UPDATE material SET cantidad = cantidad + $1 WHERE id = $2",
         [cantidad, idmaterial]
       );
+      
+       if (incidencias && incidencias[idmaterial] === "mal") {
+        await client.query(
+          "UPDATE material SET estado = 'Con incidencia' WHERE id = $1",
+          [idmaterial]
+        );
+      }
+
     }
     const observacionFinal =
       observaciones && observaciones.trim() !== ""
