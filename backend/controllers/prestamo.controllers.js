@@ -253,11 +253,10 @@ const finalizarPrestamo = async (req, res, next) => {
   const { id } = req.params;
   const { observaciones, incidencias } = req.body;
 
-
   const client = await pool.connect();
+
   try {
     await client.query("BEGIN");
-
     const prestamoRes = await client.query(
       "SELECT * FROM prestamo WHERE id = $1 AND estadoprestamo = 0",
       [id]
@@ -269,80 +268,99 @@ const finalizarPrestamo = async (req, res, next) => {
         .status(404)
         .json({ message: "Préstamo no encontrado o ya finalizado." });
     }
-
     const materialesRes = await client.query(
       "SELECT idmaterial, cantidad FROM material_prestamo WHERE idprestamo = $1",
       [id]
     );
 
+    if (materialesRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "El préstamo no tiene materiales." });
+    }
+    const idsMateriales = materialesRes.rows.map(m => m.idmaterial);
+
+    const estadosRes = await client.query(
+      `SELECT id, estado 
+       FROM material 
+       WHERE id = ANY($1)`,
+      [idsMateriales]
+    );
+
+    const mapaEstados = {};
+    estadosRes.rows.forEach(m => {
+      mapaEstados[m.id] = m.estado;
+    });
     for (const { idmaterial, cantidad } of materialesRes.rows) {
 
-      const materialActual = await client.query(
-        "SELECT estado FROM material WHERE id = $1",
-        [idmaterial]
-      );
-
-      const estadoAnterior = materialActual.rows[0].estado;
+      const estadoAnterior = mapaEstados[idmaterial];
 
       let estadoNuevo;
       let tipoEvento;
       let descripcionEvento;
+
       if (incidencias && incidencias[idmaterial]?.estado === "mal") {
         estadoNuevo = ESTADOS.CON_INCIDENCIA;
-        tipoEvento = 3; 
+        tipoEvento = 3;
         descripcionEvento = incidencias[idmaterial].comentario;
       } else {
         estadoNuevo = ESTADOS.DISPONIBLE;
-        tipoEvento = 2; 
+        tipoEvento = 2;
         descripcionEvento = "Devolución sin incidencias";
       }
-
       await client.query(
-        "UPDATE material SET estado = $1 WHERE id = $2",
-        [estadoNuevo, idmaterial]
+        `UPDATE material 
+         SET estado = $1, 
+             cantidad = cantidad + $2
+         WHERE id = $3`,
+        [estadoNuevo, cantidad, idmaterial]
       );
 
-      await client.query(
-        "UPDATE material SET cantidad = cantidad + $1 WHERE id = $2",
-        [cantidad, idmaterial]
-      );
       console.log({
-  idmaterial,
-  id,
-  tipoEvento,
-  descripcionEvento,
-  estadoAnterior,
-  estadoNuevo
-});
+        idmaterial,
+        id,
+        tipoEvento,
+        descripcionEvento,
+        estadoAnterior,
+        estadoNuevo
+      });
 
-      /*await client.query(
+      /*
+      // Cuando actives historial:
+      await client.query(
         `INSERT INTO material_historial 
-     (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, estado_anterior, estado_nuevo)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+         (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, estado_anterior, estado_nuevo)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           idmaterial,
           id,
-          idEmpleado, 
+          idEmpleado,
           tipoEvento,
           descripcionEvento,
           estadoAnterior,
           estadoNuevo
         ]
-      );*/
+      );
+      */
     }
+
     const observacionFinal =
       observaciones && observaciones.trim() !== ""
         ? observaciones
         : "Devolución sin incidencias";
 
     await client.query(
-      "UPDATE prestamo SET estadoprestamo = 1, fechaentregado = CURRENT_DATE, observaciones = $2 WHERE id = $1",
+      `UPDATE prestamo 
+       SET estadoprestamo = 1, 
+           fechaentregado = CURRENT_DATE, 
+           observaciones = $2 
+       WHERE id = $1`,
       [id, observacionFinal]
     );
 
     await client.query("COMMIT");
 
     res.json({ message: "Préstamo finalizado correctamente." });
+
   } catch (error) {
     await client.query("ROLLBACK");
     console.error(error);
