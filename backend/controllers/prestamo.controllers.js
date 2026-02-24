@@ -293,7 +293,7 @@ const finalizarPrestamo = async (req, res, next) => {
     });
     for (const { idmaterial, cantidad } of materialesRes.rows) {
 
-      const estadoAnterior = mapaEstados[idmaterial];
+      const estadoAnterior = mapaEstados[idmaterial] ?? ESTADOS.DISPONIBLE;
 
       let estadoNuevo;
       let tipoEvento;
@@ -316,19 +316,22 @@ const finalizarPrestamo = async (req, res, next) => {
         [estadoNuevo, cantidad, idmaterial]
       );
      
+      console.log("estadoAnterior:", estadoAnterior);
+      console.log("idmaterial:", idmaterial);
       await client.query(
         `INSERT INTO material_historial 
-         (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, estado_anterior, estado_nuevo)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+(idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, nombre_tecnico, estado_anterior, estado_nuevo)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
-          idmaterial,
-          id,
-          idEmpleado,
-          tipoEvento,
-          descripcionEvento,
-          estadoAnterior,
-          estadoNuevo
-        ]
+  idmaterial,
+  id,
+  idEmpleado,
+  tipoEvento,
+  descripcionEvento,
+  null,
+  estadoAnterior,
+  estadoNuevo
+]
       );
     }
 
