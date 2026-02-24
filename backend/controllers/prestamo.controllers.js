@@ -314,18 +314,7 @@ const finalizarPrestamo = async (req, res, next) => {
          WHERE id = $3`,
         [estadoNuevo, cantidad, idmaterial]
       );
-
-      console.log({
-        idmaterial,
-        id,
-        tipoEvento,
-        descripcionEvento,
-        estadoAnterior,
-        estadoNuevo
-      });
-
-      /*
-      // Cuando actives historial:
+     
       await client.query(
         `INSERT INTO material_historial 
          (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, estado_anterior, estado_nuevo)
@@ -340,7 +329,6 @@ const finalizarPrestamo = async (req, res, next) => {
           estadoNuevo
         ]
       );
-      */
     }
 
     const observacionFinal =
