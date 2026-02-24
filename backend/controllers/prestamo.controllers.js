@@ -268,6 +268,7 @@ const finalizarPrestamo = async (req, res, next) => {
         .status(404)
         .json({ message: "Préstamo no encontrado o ya finalizado." });
     }
+    const idEmpleado = prestamoRes.rows[0].idempleado;
     const materialesRes = await client.query(
       "SELECT idmaterial, cantidad FROM material_prestamo WHERE idprestamo = $1",
       [id]
