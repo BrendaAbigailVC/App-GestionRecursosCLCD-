@@ -243,7 +243,7 @@ const getPrestamosPorEmpleado = async (req, res, next) => {
 
 const ESTADOS = {
   DISPONIBLE: 0,
-  NO_DISPONIBLE: 1,
+  PRESTADO: 1,
   CON_INCIDENCIA: 2,
   EN_REPARACION: 3,
   DE_BAJA: 4
@@ -276,22 +276,50 @@ const finalizarPrestamo = async (req, res, next) => {
     );
 
     for (const { idmaterial, cantidad } of materialesRes.rows) {
-      // actualizamos el estado si hay incidencia
+
+      const materialActual = await client.query(
+        "SELECT estado FROM material WHERE id = $1",
+        [idmaterial]
+      );
+
+      const estadoAnterior = materialActual.rows[0].estado;
+
+      let estadoNuevo;
+      let tipoEvento;
+      let descripcionEvento;
       if (incidencias && incidencias[idmaterial]?.estado === "mal") {
-        await client.query(
-          "UPDATE material SET estado = $1 WHERE id = $2",
-          [ESTADOS.CON_INCIDENCIA, idmaterial]
-        );
+        estadoNuevo = ESTADOS.CON_INCIDENCIA;
+        tipoEvento = 3; 
+        descripcionEvento = incidencias[idmaterial].comentario;
       } else {
-        // si no hay incidencia ponemos como disponible o dejamos como esta
-        await client.query(
-          "UPDATE material SET estado = $1 WHERE id = $2",
-          [ESTADOS.DISPONIBLE, idmaterial]
-        );
+        estadoNuevo = ESTADOS.DISPONIBLE;
+        tipoEvento = 2; 
+        descripcionEvento = "Devolución sin incidencias";
       }
+
+      await client.query(
+        "UPDATE material SET estado = $1 WHERE id = $2",
+        [estadoNuevo, idmaterial]
+      );
+
       await client.query(
         "UPDATE material SET cantidad = cantidad + $1 WHERE id = $2",
         [cantidad, idmaterial]
+      );
+
+      await client.query(
+        `INSERT INTO material_historial 
+     (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, estado_anterior, estado_nuevo)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          idmaterial,
+          id,
+          idEmpleado, 
+          tipoEvento,
+          descripcionEvento,
+          estadoAnterior,
+          estadoNuevo
+        ]
       );
     }
     const observacionFinal =

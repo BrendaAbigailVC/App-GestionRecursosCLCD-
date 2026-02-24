@@ -72,6 +72,7 @@ const FinalizarPrestamo = () => {
   };
 
   const finalizarPrestamo = async () => {
+    console.log("Incidencias recibidas:", incidencias);
     //if (!window.confirm("¿Deseas finalizar este préstamo?")) return;
     if (!validarIncidencias()) return;
 
@@ -82,7 +83,7 @@ const FinalizarPrestamo = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ observaciones }),
+        body: JSON.stringify({ observaciones , incidencias }),
       });
 
       if (!res.ok) throw new Error("No se pudo finalizar el préstamo.");
