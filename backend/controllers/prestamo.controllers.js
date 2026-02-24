@@ -315,23 +315,21 @@ const finalizarPrestamo = async (req, res, next) => {
          WHERE id = $3`,
         [estadoNuevo, cantidad, idmaterial]
       );
-     
+
       console.log("estadoAnterior:", estadoAnterior);
       console.log("idmaterial:", idmaterial);
       await client.query(
-        `INSERT INTO material_historial 
-(idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, nombre_tecnico, estado_anterior, estado_nuevo)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        `INSERT INTO material_historial (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, nombre_tecnico, estado_anterior, estado_nuevo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
-  idmaterial,
-  id,
-  idEmpleado,
-  tipoEvento,
-  descripcionEvento,
-  null,
-  estadoAnterior,
-  estadoNuevo
-]
+          idmaterial,
+          id,
+          idEmpleado,
+          tipoEvento,
+          descripcionEvento,
+          null,
+          estadoAnterior,
+          estadoNuevo
+        ]
       );
     }
 
