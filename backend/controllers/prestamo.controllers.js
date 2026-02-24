@@ -306,8 +306,16 @@ const finalizarPrestamo = async (req, res, next) => {
         "UPDATE material SET cantidad = cantidad + $1 WHERE id = $2",
         [cantidad, idmaterial]
       );
+      console.log({
+  idmaterial,
+  id,
+  tipoEvento,
+  descripcionEvento,
+  estadoAnterior,
+  estadoNuevo
+});
 
-      await client.query(
+      /*await client.query(
         `INSERT INTO material_historial 
      (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, estado_anterior, estado_nuevo)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -320,7 +328,7 @@ const finalizarPrestamo = async (req, res, next) => {
           estadoAnterior,
           estadoNuevo
         ]
-      );
+      );*/
     }
     const observacionFinal =
       observaciones && observaciones.trim() !== ""
