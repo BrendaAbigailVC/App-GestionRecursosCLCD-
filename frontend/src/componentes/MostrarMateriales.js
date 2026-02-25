@@ -63,6 +63,31 @@ const BotonEditar = styled.button`
   }
 `;
 
+const traducirEstado = (estado) => {
+  switch (estado) {
+    case 0:
+      return { texto: "Disponible", color: "green" };
+    case 1:
+      return { texto: "Prestado", color: "blue" };
+    case 2:
+      return { texto: "Con incidencia", color: "orange" };
+    case 3:
+      return { texto: "En reparación", color: "purple" };
+    case 4:
+      return { texto: "Dado de baja", color: "red" };
+    default:
+      return { texto: "Desconocido", color: "gray" };
+  }
+};
+
+const CeldaEstado = styled.td`
+  padding: 10px 15px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+  font-weight: bold;
+  color: ${(props) => props.color};
+`;
+
 const MostrarMateriales = () => {
   const navigate = useNavigate();
   const [materiales, setMateriales] = useState([]);
@@ -138,7 +163,9 @@ const MostrarMateriales = () => {
         </EncabezadoTabla>
 
         <CuerpoTabla>
-          {materialesFiltrados.map((material) => (
+          {materialesFiltrados.map((material) => {
+            const estadoInfo = traducirEstado(material.estado);
+            return (    
             <FilaTabla key={material.id}>
               <Celda>{material.id}</Celda>
               <Celda>{material.inventario_uam}</Celda>
@@ -148,9 +175,11 @@ const MostrarMateriales = () => {
               <Celda>{material.numeroserie}</Celda>
               <Celda>{material.nombrematerial}</Celda>
               <Celda>{material.cantidad}</Celda>
-              <Celda>
-                {material.estado === 0 ? "Disponible" : "Sin Disponibilidad"}
-              </Celda>
+              
+              
+              <CeldaEstado color={estadoInfo.color}>
+                {estadoInfo.texto}
+              </CeldaEstado>
               <Celda>
                 {material.tipo === 0 ? "Inventariado" : "Consumible"}
               </Celda>
@@ -162,7 +191,8 @@ const MostrarMateriales = () => {
                 </BotonEditar>
               </Celda>
             </FilaTabla>
-          ))}
+          );
+          })}
         </CuerpoTabla>
       </Tabla>
     </>
