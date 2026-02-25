@@ -5,7 +5,8 @@ const {
     createMaterial,
     deleteMaterial,
     updateMaterial,
-    getHistorialMaterial
+    getHistorialMaterial,
+    getGestionarHistorialYEstadoMaterial
 } = require ('../controllers/material.controllers')
 
 const router = Router();
@@ -16,5 +17,6 @@ router.post('/material', createMaterial);
 router.delete('/material/:id', deleteMaterial);
 router.put('/material/:id', updateMaterial);
 router.get('/material/:id/historial', getHistorialMaterial);
+router.post('/material/:id/gestionar', getGestionarHistorialYEstadoMaterial);
 
 module.exports = router;

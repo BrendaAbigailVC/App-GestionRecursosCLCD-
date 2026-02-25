@@ -183,11 +183,66 @@ const getHistorialMaterial = async (req, res, next) => {
   }
 };
 
+const getGestionarHistorialYEstadoMaterial = async (req, res) => {
+  const { id } = req.params;
+  const { nuevoEstado, tipoEvento, descripcion, nombreTecnico } = req.body;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      "SELECT estado FROM material WHERE id = $1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("Material no encontrado");
+    }
+
+    const estadoAnterior = result.rows[0].estado;
+
+    await client.query(
+      "UPDATE material SET estado = $1 WHERE id = $2",
+      [nuevoEstado, id]
+    );
+
+    await client.query(
+      `INSERT INTO material_historial 
+            (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, 
+             nombre_tecnico, estado_anterior, estado_nuevo)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        id,
+        null,
+        null,
+        tipoEvento,
+        descripcion,
+        nombreTecnico || null,
+        estadoAnterior,
+        nuevoEstado
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    res.json({ message: "Gestión realizada correctamente" });
+
+  } catch (error) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   getAllMateriales,
   getMaterial,
   createMaterial,
   deleteMaterial,
   updateMaterial,
-  getHistorialMaterial
+  getHistorialMaterial,
+  getGestionarHistorialYEstadoMaterial,
 };
