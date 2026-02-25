@@ -62,6 +62,18 @@ const traducirEstado = (estado) => {
     }
 };
 
+const traducirEvento = (tipo) => {
+    const eventos = {
+        0: { texto: "Reparación completada", color: "green" },
+        1: { texto: "Material prestado", color: "blue" },
+        2: { texto: "Incidencia registrada", color: "orange" },
+        3: { texto: "Enviado a reparación", color: "purple" },
+        4: { texto: "Dado de baja", color: "red" },
+    };
+
+    return eventos[tipo] || { texto: "Evento desconocido", color: "gray" };
+};
+
 const HistorialMaterial = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -104,25 +116,6 @@ const HistorialMaterial = () => {
             setEventos(data);
         } catch (error) {
             console.error("Error al obtener eventos:", error);
-        }
-    };
-
-    const traducirEvento = (tipo) => {
-        switch (tipo) {
-            case 0:
-                return { texto: "Alta material", color: "green" };
-            case 1:
-                return { texto: "Préstamo", color: "blue" };
-            case 2:
-                return { texto: "Incidencia", color: "orange" };
-            case 3:
-                return { texto: "Enviado a reparación", color: "purple" };
-            case 4:
-                return { texto: "Reparado", color: "green" };
-            case 5:
-                return { texto: "Dado de baja", color: "red" };
-            default:
-                return { texto: "Evento desconocido", color: "gray" };
         }
     };
 
