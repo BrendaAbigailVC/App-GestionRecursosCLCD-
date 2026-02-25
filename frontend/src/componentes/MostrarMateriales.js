@@ -63,6 +63,19 @@ const BotonEditar = styled.button`
   }
 `;
 
+const BotonHistorial = styled.button`
+  padding: 8px 12px;
+  background-color: #5d9cec;
+  border: none;
+  color: white;
+  border-radius: 7px;
+  cursor: pointer;
+  margin-right: 5px;
+  &:hover {
+    background-color: #4a89dc;
+  }
+`;
+
 const traducirEstado = (estado) => {
   switch (estado) {
     case 0:
@@ -205,6 +218,11 @@ const MostrarMateriales = () => {
                   >
                     Editar
                   </BotonEditar>
+                  <BotonHistorial
+                    onClick={() => navigate(`/historial-material/${material.id}`)}
+                  >
+                    Historial
+                  </BotonHistorial>
                 </Celda>
               </FilaTabla>
             );
