@@ -92,6 +92,7 @@ const MostrarMateriales = () => {
   const navigate = useNavigate();
   const [materiales, setMateriales] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("todos");
 
   const obtenerMateriales = async () => {
     try {
@@ -116,10 +117,13 @@ const MostrarMateriales = () => {
 
   const materialesFiltrados = materiales.filter((material) => {
     const termino = busqueda.toLowerCase();
-    return (
+    const coincideBusqueda =
       material.id.toLowerCase().includes(termino) ||
-      material.nombrematerial.toLowerCase().includes(termino)
-    );
+      material.nombrematerial.toLowerCase().includes(termino);
+    const coincideEstado =
+      filtroEstado === "todos" ||
+      material.estado.toString() === filtroEstado;
+    return coincideBusqueda && coincideEstado;
   });
 
   return (
@@ -143,6 +147,18 @@ const MostrarMateriales = () => {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
+        <select
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value)}
+          style={{ padding: "10px", marginLeft: "10px" }}
+        >
+          <option value="todos">Todos</option>
+          <option value="0">Disponible</option>
+          <option value="1">Prestado</option>
+          <option value="2">Con incidencia</option>
+          <option value="3">En reparación</option>
+          <option value="4">Dado de baja</option>
+        </select>
       </ContenedorBusqueda>
 
       <Tabla>
@@ -165,33 +181,33 @@ const MostrarMateriales = () => {
         <CuerpoTabla>
           {materialesFiltrados.map((material) => {
             const estadoInfo = traducirEstado(material.estado);
-            return (    
-            <FilaTabla key={material.id}>
-              <Celda>{material.id}</Celda>
-              <Celda>{material.inventario_uam}</Celda>
-              <Celda>{material.inventario_coordinacion}</Celda>
-              <Celda>{material.marca}</Celda>
-              <Celda>{material.modelo}</Celda>
-              <Celda>{material.numeroserie}</Celda>
-              <Celda>{material.nombrematerial}</Celda>
-              <Celda>{material.cantidad}</Celda>
-              
-              
-              <CeldaEstado color={estadoInfo.color}>
-                {estadoInfo.texto}
-              </CeldaEstado>
-              <Celda>
-                {material.tipo === 0 ? "Inventariado" : "Consumible"}
-              </Celda>
-              <Celda>
-                <BotonEditar
-                  onClick={() => navigate(`/editar-material/${material.id}`)}
-                >
-                  Editar
-                </BotonEditar>
-              </Celda>
-            </FilaTabla>
-          );
+            return (
+              <FilaTabla key={material.id}>
+                <Celda>{material.id}</Celda>
+                <Celda>{material.inventario_uam}</Celda>
+                <Celda>{material.inventario_coordinacion}</Celda>
+                <Celda>{material.marca}</Celda>
+                <Celda>{material.modelo}</Celda>
+                <Celda>{material.numeroserie}</Celda>
+                <Celda>{material.nombrematerial}</Celda>
+                <Celda>{material.cantidad}</Celda>
+
+
+                <CeldaEstado color={estadoInfo.color}>
+                  {estadoInfo.texto}
+                </CeldaEstado>
+                <Celda>
+                  {material.tipo === 0 ? "Inventariado" : "Consumible"}
+                </Celda>
+                <Celda>
+                  <BotonEditar
+                    onClick={() => navigate(`/editar-material/${material.id}`)}
+                  >
+                    Editar
+                  </BotonEditar>
+                </Celda>
+              </FilaTabla>
+            );
           })}
         </CuerpoTabla>
       </Tabla>
