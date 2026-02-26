@@ -220,6 +220,7 @@ const EditarMaterial = () => {
             value={formData.cantidad}
             onChange={handleChange}
             required
+            disabled={formData.tipo === "0"}
           />
 
           Estado
