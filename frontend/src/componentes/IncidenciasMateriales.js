@@ -1,30 +1,241 @@
 import React, { useEffect, useState } from "react";
+import { Header, ContenedorHeader, Titulo } from "../elementos/Header";
+import styled from "styled-components";
+import { Helmet } from "react-helmet";
+import BotonAtras from "../elementos/BotonAtras";
+const ContenedorStats = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin: 30px 0;
+  flex-wrap: wrap;
+`;
 
-const backdropStyle = {
-  position: "fixed",
-  top: 0, left: 0, right: 0, bottom: 0,
-  background: "rgba(0,0,0,0.5)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 1050,
-};
+const CardStat = styled.div`
+  background: white;
+  padding: 20px 35px;
+  border-radius: 15px;
+  min-width: 220px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  transition: 0.2s ease;
 
-const modalStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "10px",
-  width: "400px",
-};
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #777;
+    font-weight: 500;
+  }
+`;
+
+const HeaderModal = styled.div`
+  text-align: center;
+  margin-bottom: 20px;
+`;
+
+const Tabla = styled.table`
+  width: 90%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+`;
+
+const EncabezadoTabla = styled.thead`
+  background-color: #5d9cec;
+  color: white;
+  text-align: left;
+`;
+
+const FilaTabla = styled.tr``;
+
+const CeldaEncabezado = styled.th`
+  padding: 12px 15px;
+`;
+
+const CuerpoTabla = styled.tbody``;
+
+const Celda = styled.td`
+  padding: 10px 15px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+`;
+
+const ModalFondo = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+`;
+
+const ModalContenido = styled.div`
+ position: relative; 
+  background: white;
+  padding: 35px;
+  border-radius: 20px;
+  width: 520px;
+  max-width: 95%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: modalFade 0.25s ease-out;
+
+  @keyframes modalFade {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const BotonCerrar = styled.button`
+  position: absolute;
+  top: 15px;
+  right: 15px;
+
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #888;
+  transition: 0.2s ease;
+
+  &:hover {
+    color: #dc3545;
+    transform: scale(1.1);
+  }
+`;
+
+const BotonAccion = styled.button`
+  padding: 10px 15px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+`;
+const BotonGestionar = styled.button`
+  background: #4a89dc;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #ffffff;
+  font-weight: 600;
+  transition: 0.2s ease;
+
+  &:hover {
+    background: #7592b9;
+    color: white;
+  }
+`;
+const GrupoInput = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+`;
+
+const Label = styled.label`
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+`;
+
+const InputEstilizado = styled.input`
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.8px solid #e0e0e0;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  outline: none;
+
+  &:focus {
+    border-color: #4a89dc;
+    box-shadow: 0 0 0 3px rgba(74, 137, 220, 0.15);
+  }
+`;
+
+const TextAreaEstilizado = styled.textarea`
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.8px solid #e0e0e0;
+  font-size: 12px;
+  resize: none;
+  transition: all 0.2s ease;
+  outline: none;
+
+  &:focus {
+    border-color: #4a89dc;
+    box-shadow: 0 0 0 3px rgba(74, 137, 220, 0.15);
+  }
+`;
+
+const CeldaEstado = styled.td`
+  padding: 10px 15px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+  font-weight: bold;
+  color: ${(props) => props.color};
+`;
 
 const traducirEstado = (estado) => {
   switch (estado) {
-    case 0: return "Disponible";
-    case 1: return "Prestado";
-    case 2: return "Con incidencia";
-    case 3: return "En reparación";
-    case 4: return "Dado de baja";
-    default: return "Desconocido";
+    case 0:
+      return { texto: "Disponible", color: "green" };
+    case 1:
+      return { texto: "Prestado", color: "purple" };
+    case 2:
+      return { texto: "Con incidencia", color: "orange" };
+    case 3:
+      return { texto: "En reparación", color: "blue" };
+    case 4:
+      return { texto: "Dado de baja", color: "red" };
+    default:
+      return { texto: "Desconocido", color: "gray" };
   }
 };
 
@@ -108,29 +319,45 @@ const IncidenciasMateriales = () => {
   const enReparacion = materiales.filter(m => m.estado === 3).length;
 
   return (
-    <div className="container mt-4">
+    <>
+      <Helmet>
+        <title>Gestión de Incidencias Materiales</title>
+      </Helmet>
 
-      <h2>Gestión de Incidencias</h2>
+      <Header>
+        <ContenedorHeader>
+          <Titulo>Gestión de Incidencias de Materiales</Titulo>
+        </ContenedorHeader>
+      </Header>
+      <BotonAtras ruta="/materiales" />
 
-      <div className="mb-4">
-        <strong>Incidencias pendientes:</strong> {pendientes} <br />
-        <strong>En reparación:</strong> {enReparacion}
-      </div>
 
-      <table className="table table-bordered table-hover">
-        <thead className="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Material</th>
-            <th>Fecha incidencia</th>
-            <th>Préstamo</th>
-            <th>Reportado por</th>
-            <th>Comentario</th>
-            <th>Estado</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody>
+      <ContenedorStats>
+        <CardStat>
+          <h2 style={{ color: "#f6c23e" }}>{pendientes}</h2>
+          <p>Incidencias Pendientes</p>
+        </CardStat>
+
+        <CardStat>
+          <h2 style={{ color: "#4a89dc" }}>{enReparacion}</h2>
+          <p>En Reparación</p>
+        </CardStat>
+      </ContenedorStats>
+
+      <Tabla>
+        <EncabezadoTabla>
+          <FilaTabla>
+            <CeldaEncabezado>ID</CeldaEncabezado>
+            <CeldaEncabezado>Material</CeldaEncabezado>
+            <CeldaEncabezado>Fecha incidencia</CeldaEncabezado>
+            <CeldaEncabezado>Préstamo</CeldaEncabezado>
+            <CeldaEncabezado>Reportado por</CeldaEncabezado>
+            <CeldaEncabezado>Comentario</CeldaEncabezado>
+            <CeldaEncabezado>Estado</CeldaEncabezado>
+            <CeldaEncabezado>Acción</CeldaEncabezado>
+          </FilaTabla>
+        </EncabezadoTabla>
+        <CuerpoTabla>
           {materiales.length === 0 ? (
             <tr>
               <td colSpan="8" className="text-center">
@@ -138,127 +365,142 @@ const IncidenciasMateriales = () => {
               </td>
             </tr>
           ) : (
-            materiales.map((m) => (
-              <tr key={m.id}>
-                <td>{m.id}</td>
-                <td>{m.nombre}</td>
-                <td>{m.fecha}</td>
-                <td>{m.idprestamo}</td>
-                <td>{m.reportadoPor}</td>
-                <td>{m.comentario}</td>
-                <td>{traducirEstado(m.estado)}</td>
-                <td>
-                  <button
-                    className="btn btn-warning btn-sm"
-                    onClick={() => abrirModal(m)}
-                  >
-                    🔧 Gestionar
-                  </button>
-                </td>
-              </tr>
-            ))
+            materiales.map((m) => {
+              const estadoInfo = traducirEstado(m.estado);
+              return (
+                <FilaTabla key={m.id}>
+                  <Celda>{m.id}</Celda>
+                  <Celda>{m.nombre}</Celda>
+                  <Celda>{m.fecha}</Celda>
+                  <Celda>{m.idprestamo}</Celda>
+                  <Celda>{m.reportadoPor}</Celda>
+                  <Celda>{m.comentario}</Celda>
+                  <CeldaEstado color={estadoInfo.color}>
+                    {estadoInfo.texto}
+                  </CeldaEstado>
+                  <Celda>
+                    <BotonGestionar onClick={() => abrirModal(m)}>
+                      Gestionar
+                    </BotonGestionar>
+                  </Celda>
+                </FilaTabla>
+              );
+            })
           )}
-        </tbody>
-      </table>
+        </CuerpoTabla>
+      </Tabla>
 
       {modalOpen && materialSeleccionado && (
-        <div style={backdropStyle}>
-          <div style={modalStyle}>
+        <ModalFondo>
+          <ModalContenido>
 
-            <h4>Gestionar Material</h4>
-            <p><strong>ID:</strong> {materialSeleccionado.id}</p>
-            <p><strong>Material:</strong> {materialSeleccionado.nombre}</p>
-            <p><strong>Estado actual:</strong> {traducirEstado(materialSeleccionado.estado)}</p>
+            <HeaderModal>
+              <h4 style={{ color: "#000000", margin: 0 }}>
+                Gestionar Material
+              </h4>
+            </HeaderModal>
 
             <div className="mb-3">
-              <label className="form-label">Descripción *</label>
-              <textarea
-                className="form-control"
-                rows="3"
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-              />
+              <p className="mb-1">
+                <strong>Material:</strong> {materialSeleccionado.nombre}
+              </p>
+
+              <p className="mb-1">
+                <strong>Estado actual:</strong>{" "}
+                <span className={`badge ${materialSeleccionado.estado === 2
+                  ? "bg-warning"
+                  : materialSeleccionado.estado === 3
+                    ? "bg-info"
+                    : "bg-secondary"
+                  }`}>
+                  {traducirEstado(materialSeleccionado.estado).texto}
+                </span>
+              </p>
             </div>
 
+            <GrupoInput>
+              <Label>Descripción *</Label>
+              <TextAreaEstilizado
+                rows="3"
+                placeholder="Describe la incidencia o acción realizada..."
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                error={!descripcion.trim()}
+              />
+            </GrupoInput>
+
             {materialSeleccionado.estado === 2 && (
-              <div className="mb-3">
-                <label className="form-label">Nombre del técnico *</label>
-                <input
+              <GrupoInput>
+                <Label>Nombre del técnico *</Label>
+                <InputEstilizado
                   type="text"
-                  className="form-control"
+                  placeholder="Ej. Juan Pérez"
                   value={nombreTecnico}
                   onChange={(e) => setNombreTecnico(e.target.value)}
+                  error={!nombreTecnico.trim()}
                 />
-              </div>
+              </GrupoInput>
             )}
 
-            <div className="mb-2">
-
+            <div className="d-grid gap-2">
 
               {materialSeleccionado.estado === 2 && (
                 <>
-                  <button
-                    className="btn btn-primary me-2"
+                  <BotonAccion
+                    style={{ background: "#4a89dc", color: "white" }}
                     disabled={loading}
                     onClick={() => gestionar(3, 3)}
                   >
                     Enviar a reparación
-                  </button>
+                  </BotonAccion>
 
-                  <button
-                    className="btn btn-danger me-2"
-                    disabled={loading}
-                    onClick={() => gestionar(4, 4)}
-                  >
-                    Dar de baja
-                  </button>
-
-                  <button
-                    className="btn btn-success"
+                  <BotonAccion
+                    style={{ background: "#28a745", color: "white" }}
                     disabled={loading}
                     onClick={() => gestionar(0, 0)}
                   >
                     Resolver sin reparación
-                  </button>
+                  </BotonAccion>
+
+                  <BotonAccion
+                    style={{ background: "#dc3545", color: "white" }}
+                    disabled={loading}
+                    onClick={() => gestionar(4, 4)}
+                  >
+                    Dar de baja
+                  </BotonAccion>
                 </>
               )}
 
               {materialSeleccionado.estado === 3 && (
                 <>
-                  <button
-                    className="btn btn-success me-2"
+                  <BotonAccion
+                    style={{ background: "#28a745", color: "white" }}
                     disabled={loading}
-                    onClick={() => gestionar(0, 7)} 
+                    onClick={() => gestionar(0, 7)}
                   >
-                    Marcar como reparado
-                  </button>
+                    ✔ Marcar como reparado
+                  </BotonAccion>
 
-                  <button
-                    className="btn btn-danger"
+                  <BotonAccion
+                    style={{ background: "#dc3545", color: "white" }}
                     disabled={loading}
                     onClick={() => gestionar(4, 4)}
                   >
                     Dar de baja
-                  </button>
+                  </BotonAccion>
                 </>
               )}
-
             </div>
 
-            <div className="mt-3">
-              <button
-                className="btn btn-secondary"
-                onClick={cerrarModal}
-              >
-                Cancelar
-              </button>
-            </div>
+            <BotonCerrar onClick={cerrarModal}>
+              ✕
+            </BotonCerrar>
 
-          </div>
-        </div>
+          </ModalContenido>
+        </ModalFondo>
       )}
-
-    </div>
+    </>
   );
 };
 

@@ -81,11 +81,11 @@ const traducirEstado = (estado) => {
     case 0:
       return { texto: "Disponible", color: "green" };
     case 1:
-      return { texto: "Prestado", color: "blue" };
+      return { texto: "Prestado", color: "purple" };
     case 2:
       return { texto: "Con incidencia", color: "orange" };
     case 3:
-      return { texto: "En reparación", color: "purple" };
+      return { texto: "En reparación", color: "blue" };
     case 4:
       return { texto: "Dado de baja", color: "red" };
     default:
