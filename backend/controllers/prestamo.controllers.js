@@ -206,14 +206,31 @@ const createPrestamo = async (req, res, next) => {
         });
       }
 
+      const estadoAnterior = materialDB.rows[0].estado ?? ESTADOS.DISPONIBLE;
+
       await client.query(
-        "UPDATE material SET cantidad = cantidad - $1 WHERE id = $2",
-        [cantidad, idMaterial]
+        "UPDATE material SET cantidad = cantidad - $1, estado = $2 WHERE id = $3",
+        [cantidad, ESTADOS.PRESTADO, idMaterial]
       );
 
       await client.query(
         "INSERT INTO material_prestamo (IdPrestamo, IdMaterial, Cantidad) VALUES ($1, $2, $3)",
         [id, idMaterial, cantidad]
+      );
+
+      await client.query(
+        `INSERT INTO material_historial 
+          (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, estado_anterior, estado_nuevo) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          idMaterial,
+          id,
+          idEmpleado,
+          1,
+          `Préstamo asignado a alumno ${idAlumno}`,
+          estadoAnterior,
+          ESTADOS.PRESTADO
+        ]
       );
     }
 
