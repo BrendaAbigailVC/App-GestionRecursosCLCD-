@@ -370,11 +370,21 @@ const RegistrarPrestamo = () => {
         navigate("/prestamos");
       } else {
         const error = await res.json();
-        alert("Error al registrar préstamo: " + error.message);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error al registrar préstamo: " + error.message,
+          confirmButtonText: "Entendido"
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("Error de red al registrar el préstamo.");
+      Swal.fire({
+        icon: "error",
+        title: "Error de red",
+        text: "Error al registrar préstamo: " + err.message,
+        confirmButtonText: "Entendido"
+      });
     }
   };
 

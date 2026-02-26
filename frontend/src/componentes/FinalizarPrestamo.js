@@ -12,7 +12,7 @@ import {
 } from "../elementos/ElementosDeFormulario";
 import Boton from "../elementos/Boton";
 import BotonAtras from "../elementos/BotonAtras";
-
+import Swal from "sweetalert2";
 const TablaMateriales = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -60,7 +60,11 @@ const FinalizarPrestamo = () => {
         setMateriales(data.materiales || []);
       } catch (err) {
         console.error(err);
-        alert("Error al obtener el préstamo.");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error al obtener el préstamo.",
+        });
       }
     };
 
@@ -83,16 +87,26 @@ const FinalizarPrestamo = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ observaciones , incidencias }),
+        body: JSON.stringify({ observaciones, incidencias }),
       });
 
       if (!res.ok) throw new Error("No se pudo finalizar el préstamo.");
 
-      alert("Préstamo finalizado correctamente.");
+      Swal.fire({
+        icon: "success",
+        title: "¡Éxito!",
+        text: "Préstamo finalizado correctamente.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
       navigate("/mostrar-prestamos-activos");
     } catch (err) {
       console.error(err);
-      alert("Hubo un error al finalizar el préstamo.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Hubo un error al finalizar el préstamo.",
+      });
     }
   };
 
@@ -100,11 +114,19 @@ const FinalizarPrestamo = () => {
     for (const mat of materiales) {
       const inc = incidencias[mat.idmaterial];
       if (!inc) {
-        alert(`Debes indicar el estado del material: ${mat.nombrematerial}`);
+        Swal.fire({
+          icon: "warning",
+          title: "Campo obligatorio",
+          text: `Debes indicar el estado del material: ${mat.nombrematerial}`,
+        });
         return false;
       }
       if (inc.estado === "mal" && !inc.comentario.trim()) {
-        alert(`Describe el problema del material: ${mat.nombrematerial}`);
+        Swal.fire({
+          icon: "info",
+          title: "Descripción requerida",
+          text: `Describe el problema del material: ${mat.nombrematerial}`,
+        });
         return false;
       }
     }
@@ -238,9 +260,9 @@ const FinalizarPrestamo = () => {
 
 
           <ContenedorBoton>
-          <Boton as="button" type="button" onClick={finalizarPrestamo}>
-  Procesar Devolución
-</Boton>
+            <Boton as="button" type="button" onClick={finalizarPrestamo}>
+              Procesar Devolución
+            </Boton>
           </ContenedorBoton>
         </FormularioRegistro>
       ) : (

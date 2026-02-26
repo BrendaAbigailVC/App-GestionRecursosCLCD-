@@ -14,7 +14,7 @@ import {
 } from "../elementos/ElementosDeFormulario";
 import imagen1 from "../imagenes/motasPantera4.png";
 import BotonAtras from "../elementos/BotonAtras";
-
+import Swal from "sweetalert2";
 const ImagenMotas = styled.img`
   position: absolute;
   top: 12%;
@@ -69,10 +69,19 @@ const EditarMaterial = () => {
             descripcion: data.descripcion || "",
           });
         } else {
-          alert("Error al obtener datos del material");
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Error al obtener datos del material",
+          });
         }
       } catch (error) {
         console.error("Error al cargar material:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Hubo un error al cargar los datos del material",
+        });
       }
     };
 
@@ -107,7 +116,11 @@ const EditarMaterial = () => {
 
     for (const campo in formData) {
       if (formData[campo].toString().trim() === "") {
-        alert(`Por favor, completa el campo: ${campo}`);
+        Swal.fire({
+          icon: "warning",
+          title: "Campo incompleto",
+          text: `Por favor, completa el campo: ${campo}`,
+        });
         return;
       }
     }
@@ -127,10 +140,18 @@ const EditarMaterial = () => {
 
       if (!response.ok) throw new Error("Error al actualizar material");
 
-      alert("Material actualizado con éxito");
+      Swal.fire({
+        icon: "success",
+        title: "Material actualizado",
+        text: "El material ha sido actualizado con éxito.",
+      });
     } catch (error) {
       console.error("Error al actualizar material:", error);
-      alert("Hubo un error al actualizar el material");
+      Swal.fire({
+        icon: "error",
+        title: "Error al actualizar",
+        text: "Hubo un error al actualizar el material.",
+      });
     }
   };
 

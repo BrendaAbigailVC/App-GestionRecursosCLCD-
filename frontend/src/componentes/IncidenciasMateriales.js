@@ -3,6 +3,7 @@ import { Header, ContenedorHeader, Titulo } from "../elementos/Header";
 import styled from "styled-components";
 import { Helmet } from "react-helmet";
 import BotonAtras from "../elementos/BotonAtras";
+import Swal from "sweetalert2";
 const ContenedorStats = styled.div`
   display: flex;
   justify-content: center;
@@ -280,12 +281,20 @@ const IncidenciasMateriales = () => {
 
   const gestionar = async (nuevoEstado, tipoEvento) => {
     if (!descripcion.trim()) {
-      alert("La descripción es obligatoria");
+      Swal.fire({
+        icon: "warning",
+        title: "Descripción requerida",
+        text: "La descripción es obligatoria",
+      });
       return;
     }
 
     if (nuevoEstado === 3 && !nombreTecnico.trim()) {
-      alert("Debe ingresar el nombre del técnico");
+      Swal.fire({
+        icon: "warning",
+        title: "Técnico requerido",
+        text: "Debe ingresar el nombre del técnico",
+      });
       return;
     }
 
@@ -309,7 +318,11 @@ const IncidenciasMateriales = () => {
       cargarDatos();
     } catch (error) {
       console.error(error);
-      alert("Error al gestionar material");
+      Swal.fire({
+        icon: "error",
+        title: "Error al gestionar material",
+        text: "Hubo un error al gestionar el material.",
+      });
     } finally {
       setLoading(false);
     }
