@@ -220,7 +220,7 @@ const getMaterialesIncidencias = async (req, res) => {
 
 const putHistorialYEstadoMaterial = async (req, res) => {
   const { id } = req.params;
-  const { nuevoEstado, tipoEvento, descripcion, nombreTecnico, idEmpleado } = req.body;
+  const { nuevoEstado, descripcion, nombreTecnico, idEmpleado } = req.body;
 
   const client = await pool.connect();
 
@@ -237,6 +237,27 @@ const putHistorialYEstadoMaterial = async (req, res) => {
     }
 
     const estadoAnterior = result.rows[0].estado;
+
+    const transicionesValidas = {
+      2: [3, 0, 4],
+      3: [0, 4],
+    };
+
+    if (!transicionesValidas[estadoAnterior]?.includes(nuevoEstado)) {
+      throw new Error("Transición no permitida");
+    }
+
+    let tipoEvento;
+
+    if (estadoAnterior === 2 && nuevoEstado === 3) {
+      tipoEvento = "Enviado a reparación";
+    } else if (estadoAnterior === 3 && nuevoEstado === 0) {
+      tipoEvento = "Material reparado y disponible";
+    } else if (estadoAnterior === 2 && nuevoEstado === 0) {
+      tipoEvento = "Incidencia resuelta sin reparación";
+    } else if (nuevoEstado === 4) {
+      tipoEvento = "Material dado de baja";
+    }
 
     await client.query(
       "UPDATE material SET estado = $1 WHERE id = $2",
