@@ -79,6 +79,14 @@ const HomeCoordinador = () => {
         Cerrar sesión
       </Boton>
       <ContenedorBotonRegistro>
+         <ContenedorImagen>
+          <ImagenLogo1 src={Prestamo} alt="LogoUam" />
+          {tienePermiso(4) && (
+            <Boton as="button" primario onClick={() => navigate("/prestamos")}>
+              Prestamos
+            </Boton>
+          )}
+        </ContenedorImagen>
         <ContenedorImagen>
           <ImagenLogo1 src={Orden} alt="LogoUam" />
           {tienePermiso(0) && (
@@ -118,14 +126,6 @@ const HomeCoordinador = () => {
           {tienePermiso(3) && (
             <Boton as="button" primario onClick={() => navigate("/permisos")}>
               Permisos
-            </Boton>
-          )}
-        </ContenedorImagen>
-        <ContenedorImagen>
-          <ImagenLogo1 src={Prestamo} alt="LogoUam" />
-          {tienePermiso(4) && (
-            <Boton as="button" primario onClick={() => navigate("/prestamos")}>
-              Prestamos
             </Boton>
           )}
         </ContenedorImagen>

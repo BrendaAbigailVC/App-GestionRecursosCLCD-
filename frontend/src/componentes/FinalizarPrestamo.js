@@ -238,9 +238,9 @@ const FinalizarPrestamo = () => {
 
 
           <ContenedorBoton>
-            <Boton as="button" onClick={finalizarPrestamo}>
-              Procesar Devolución
-            </Boton>
+          <Boton as="button" type="button" onClick={finalizarPrestamo}>
+  Procesar Devolución
+</Boton>
           </ContenedorBoton>
         </FormularioRegistro>
       ) : (
