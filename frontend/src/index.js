@@ -30,6 +30,7 @@ import MostrarMateriales from "./componentes/MostrarMateriales";
 import EliminarMaterial from "./componentes/EliminarMaterial";
 import EditarMaterial from "./componentes/EditarMaterial";
 import HistorialMaterial from "./componentes/HistorialMaterial";
+import IncidenciasMateriales from "./componentes/IncidenciasMateriales";
 
 import Prestamos from "./componentes/Prestamos";
 import RegistrarPrestamo from "./componentes/RegistrarPrestamo";
@@ -117,6 +118,7 @@ root.render(
             />
             <Route path="/registro-material" element={<RegistrarMaterial />} />
             <Route path="/mostrar-materiales" element={<MostrarMateriales />} />
+            <Route path="/incidencias-materiales" element={<IncidenciasMateriales />} />
             <Route path="/eliminar-material" element={<EliminarMaterial />} />
             <Route path="/editar-material/:id" element={<EditarMaterial />} />
             <Route path="/registro-reporte" element={<RegistrarReporte />} />
