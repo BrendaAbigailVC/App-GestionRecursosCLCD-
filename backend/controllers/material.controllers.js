@@ -220,7 +220,7 @@ const getMaterialesIncidencias = async (req, res) => {
 
 const putHistorialYEstadoMaterial = async (req, res) => {
   const { id } = req.params;
-  const { nuevoEstado, tipoEvento, descripcion, nombreTecnico } = req.body;
+  const { nuevoEstado, tipoEvento, descripcion, nombreTecnico, idEmpleado } = req.body;
 
   const client = await pool.connect();
 
@@ -243,15 +243,24 @@ const putHistorialYEstadoMaterial = async (req, res) => {
       [nuevoEstado, id]
     );
 
+    const empleado = await client.query(
+      "SELECT 1 FROM empleado WHERE id = $1",
+      [idEmpleado]
+    );
+
+    if (empleado.rows.length === 0) {
+      throw new Error("Empleado no válido");
+    }
+
     await client.query(
       `INSERT INTO material_historial 
-            (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, 
-             nombre_tecnico, estado_anterior, estado_nuevo)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, 
+        nombre_tecnico, estado_anterior, estado_nuevo)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         id,
         null,
-        null,
+        idEmpleado,
         tipoEvento,
         descripcion,
         nombreTecnico || null,
@@ -266,6 +275,7 @@ const putHistorialYEstadoMaterial = async (req, res) => {
 
   } catch (error) {
     await client.query("ROLLBACK");
+    console.error(error);
     res.status(500).json({ error: error.message });
   } finally {
     client.release();
