@@ -189,21 +189,26 @@ const getMaterialesIncidencias = async (req, res) => {
 
   try {
     const query = `
-      SELECT DISTINCT ON (mh.idmaterial)
+      SELECT 
         m.id,
         m.nombrematerial AS nombre,
         mh.fecha_evento AS fecha,
         mh.idprestamo,
         e.nombre AS "reportadoPor",
         mh.descripcion_evento AS comentario,
-        mh.estado_nuevo AS estado
-      FROM material_historial mh
-      JOIN material m 
-        ON mh.idmaterial = m.id
+        m.estado
+      FROM material m
+      LEFT JOIN LATERAL (
+          SELECT *
+          FROM material_historial
+          WHERE idmaterial = m.id
+          ORDER BY fecha_evento DESC
+          LIMIT 1
+      ) mh ON true
       LEFT JOIN empleado e 
-        ON mh.idempleado = e.id
-      WHERE mh.estado_nuevo IN (2, 3)
-      ORDER BY mh.idmaterial, mh.fecha_evento DESC
+          ON mh.idempleado = e.id
+      WHERE m.estado IN (2, 3)
+      ORDER BY mh.fecha_evento DESC NULLS LAST
     `;
 
     const result = await client.query(query);

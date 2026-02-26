@@ -63,15 +63,18 @@ const traducirEstado = (estado) => {
 };
 
 const traducirEvento = (tipo) => {
-    const eventos = {
-        0: { texto: "Reparación completada", color: "green" },
-        1: { texto: "Material prestado", color: "blue" },
-        2: { texto: "Incidencia registrada", color: "orange" },
-        3: { texto: "Enviado a reparación", color: "purple" },
-        4: { texto: "Dado de baja", color: "red" },
-    };
-
-    return eventos[tipo] || { texto: "Evento desconocido", color: "gray" };
+  switch (tipo) {
+    case 3:
+      return { texto: "Enviado a reparación", color: "purple" };
+    case 7:
+      return { texto: "Material reparado", color: "green" };
+    case 6:
+      return { texto: "Incidencia resuelta", color: "orange" };
+    case 4:
+      return { texto: "Material dado de baja", color: "red" };
+    default:
+      return { texto: "Evento desconocido", color: "gray" };
+  }
 };
 
 const HistorialMaterial = () => {
