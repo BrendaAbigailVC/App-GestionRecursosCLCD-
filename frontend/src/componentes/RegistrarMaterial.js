@@ -259,6 +259,18 @@ const RegistrarMaterial = () => {
             error={erroresMensaje.nombreMaterial}
           />
           <MensajeConError error={erroresMensaje.nombreMaterial} />
+          Tipo
+          <Select
+            name="tipo"
+            value={formData.tipo}
+            onChange={handleChange}
+            error={erroresMensaje.tipo}
+          >
+            <option value="">Seleccione Tipo</option>
+            <option value="0">Inventariado</option>
+            <option value="1">Consumible</option>
+          </Select>
+          <MensajeConError error={erroresMensaje.tipo} />
           Cantidad
           <Input2
             type="text"
@@ -275,18 +287,7 @@ const RegistrarMaterial = () => {
             <option value="0">Disponible</option>
             <option value="1">Sin Disponibilidad</option>
           </Select>
-          Tipo
-          <Select
-            name="tipo"
-            value={formData.tipo}
-            onChange={handleChange}
-            error={erroresMensaje.tipo}
-          >
-            <option value="">Seleccione Tipo</option>
-            <option value="0">Inventariado</option>
-            <option value="1">Consumible</option>
-          </Select>
-          <MensajeConError error={erroresMensaje.tipo} />
+          
           Descripción
           <Input2
             type="text"

@@ -216,9 +216,9 @@ const Historico = () => {
             if (p.estadoprestamo === 0 && fechaDevolucion && fechaDevolucion < hoy) {
               color = "red";
             } else if (p.estadoprestamo === 1) {
-              color = "blue";
-            } else if (p.estadoprestamo === 0 && fechaDevolucion && fechaDevolucion >= hoy) {
               color = "green";
+            } else if (p.estadoprestamo === 0 && fechaDevolucion && fechaDevolucion >= hoy) {
+              color = "purple";
             }
 
             return (
