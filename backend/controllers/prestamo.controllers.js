@@ -278,16 +278,17 @@ const finalizarPrestamo = async (req, res, next) => {
       "SELECT * FROM prestamo WHERE id = $1 AND estadoprestamo = 0",
       [id]
     );
-
     if (prestamoRes.rows.length === 0) {
       await client.query("ROLLBACK");
-      return res
-        .status(404)
-        .json({ message: "Préstamo no encontrado o ya finalizado." });
+      return res.status(404).json({ message: "Préstamo no encontrado o ya finalizado." });
     }
     const idEmpleado = prestamoRes.rows[0].idempleado;
+
     const materialesRes = await client.query(
-      "SELECT idmaterial, cantidad FROM material_prestamo WHERE idprestamo = $1",
+      `SELECT mp.idmaterial, mp.cantidad, m.tipo 
+       FROM material_prestamo mp
+       JOIN material m ON mp.idmaterial = m.id
+       WHERE mp.idprestamo = $1`,
       [id]
     );
 
@@ -295,77 +296,62 @@ const finalizarPrestamo = async (req, res, next) => {
       await client.query("ROLLBACK");
       return res.status(400).json({ message: "El préstamo no tiene materiales." });
     }
-    const idsMateriales = materialesRes.rows.map(m => m.idmaterial);
 
-    const estadosRes = await client.query(
-      `SELECT id, estado 
-       FROM material 
-       WHERE id = ANY($1)`,
-      [idsMateriales]
-    );
-
-    const mapaEstados = {};
-    estadosRes.rows.forEach(m => {
-      mapaEstados[m.id] = m.estado;
-    });
-    for (const { idmaterial, cantidad } of materialesRes.rows) {
-
-      const estadoAnterior = mapaEstados[idmaterial] ?? ESTADOS.DISPONIBLE;
+    for (const { idmaterial, cantidad, tipo } of materialesRes.rows) {
+      const inc = incidencias[idmaterial];
+      if (!inc) continue;
+      const cantidadDevuelta = tipo === 1 ? (inc.cantidadDevuelta ?? cantidad) : cantidad;
+      const estadoAnteriorRes = await client.query(
+        "SELECT estado, cantidad FROM material WHERE id = $1",
+        [idmaterial]
+      );
+      const materialActual = estadoAnteriorRes.rows[0];
+      const estadoAnterior = materialActual.estado;
+      const cantidadActual = materialActual.cantidad;
 
       let estadoNuevo;
       let tipoEvento;
       let descripcionEvento;
 
-      if (incidencias && incidencias[idmaterial]?.estado === "mal") {
+      if (inc.estado === "mal") {
         estadoNuevo = ESTADOS.CON_INCIDENCIA;
         tipoEvento = 5;
-        descripcionEvento = incidencias[idmaterial].comentario;
+        descripcionEvento = inc.comentario;
       } else {
-        estadoNuevo = ESTADOS.DISPONIBLE;
+        if (tipo === 1) {
+          estadoNuevo = cantidadActual + cantidadDevuelta > 0 ? ESTADOS.DISPONIBLE : ESTADOS.AGOTADO;
+        } else {
+          estadoNuevo = ESTADOS.DISPONIBLE;
+        }
         tipoEvento = 2;
         descripcionEvento = "Devolución sin incidencias";
       }
       await client.query(
         `UPDATE material 
-         SET estado = $1, 
-             cantidad = cantidad + $2
+         SET estado = $1, cantidad = cantidad + $2
          WHERE id = $3`,
-        [estadoNuevo, cantidad, idmaterial]
+        [estadoNuevo, cantidadDevuelta, idmaterial]
       );
 
-      console.log("estadoAnterior:", estadoAnterior);
-      console.log("idmaterial:", idmaterial);
       await client.query(
-        `INSERT INTO material_historial (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, nombre_tecnico, estado_anterior, estado_nuevo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          idmaterial,
-          id,
-          idEmpleado,
-          tipoEvento,
-          descripcionEvento,
-          null,
-          estadoAnterior,
-          estadoNuevo
-        ]
+        `INSERT INTO material_historial
+         (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, nombre_tecnico, estado_anterior, estado_nuevo)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [idmaterial, id, idEmpleado, tipoEvento, descripcionEvento, null, estadoAnterior, estadoNuevo]
       );
     }
 
-    const observacionFinal =
-      observaciones && observaciones.trim() !== ""
-        ? observaciones
-        : "Devolución sin incidencias";
-
+    const observacionFinal = observaciones?.trim() || "Devolución sin incidencias";
     await client.query(
       `UPDATE prestamo 
-       SET estadoprestamo = 1, 
-           fechaentregado = CURRENT_DATE, 
-           observaciones = $2 
+       SET estadoprestamo = 1,
+           fechaentregado = CURRENT_DATE,
+           observaciones = $2
        WHERE id = $1`,
       [id, observacionFinal]
     );
 
     await client.query("COMMIT");
-
     res.json({ message: "Préstamo finalizado correctamente." });
 
   } catch (error) {
