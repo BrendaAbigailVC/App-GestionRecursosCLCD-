@@ -301,7 +301,7 @@ const finalizarPrestamo = async (req, res, next) => {
 
       if (incidencias && incidencias[idmaterial]?.estado === "mal") {
         estadoNuevo = ESTADOS.CON_INCIDENCIA;
-        tipoEvento = 3;
+        tipoEvento = 5;
         descripcionEvento = incidencias[idmaterial].comentario;
       } else {
         estadoNuevo = ESTADOS.DISPONIBLE;
