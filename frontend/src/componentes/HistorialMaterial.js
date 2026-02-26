@@ -134,7 +134,7 @@ const HistorialMaterial = () => {
                 </ContenedorHeader>
             </Header>
 
-            <BotonAtras ruta="/materiales" />
+            <BotonAtras ruta="/mostrar-materiales" />
 
             <Contenedor>
                 {material && (
