@@ -249,15 +249,18 @@ const putHistorialYEstadoMaterial = async (req, res) => {
 
     let tipoEvento;
 
-    if (estadoAnterior === 2 && nuevoEstado === 3) {
-      tipoEvento = "Enviado a reparación";
-    } else if (estadoAnterior === 3 && nuevoEstado === 0) {
-      tipoEvento = "Material reparado y disponible";
-    } else if (estadoAnterior === 2 && nuevoEstado === 0) {
-      tipoEvento = "Incidencia resuelta sin reparación";
-    } else if (nuevoEstado === 4) {
-      tipoEvento = "Material dado de baja";
-    }
+   if (estadoAnterior === 2 && nuevoEstado === 3) {
+  tipoEvento = 3; // Enviado a reparación
+}
+else if (estadoAnterior === 3 && nuevoEstado === 0) {
+  tipoEvento = 7; //Reparado
+}
+else if (estadoAnterior === 2 && nuevoEstado === 0) {
+  tipoEvento = 6; //Resuelto sin reparación
+}
+else if (nuevoEstado === 4) {
+  tipoEvento = 4; // Baja
+}
 
     await client.query(
       "UPDATE material SET estado = $1 WHERE id = $2",
