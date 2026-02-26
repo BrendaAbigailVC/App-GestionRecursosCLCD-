@@ -89,14 +89,15 @@ const getPrestamo = async (req, res, next) => {
     const prestamo = prestamoResult.rows[0];
 
     const materialesQuery = `
-      SELECT 
-        mp.idmaterial,
-        m.nombrematerial AS nombrematerial,
-        mp.cantidad
-      FROM material_prestamo mp
-      JOIN material m ON mp.idmaterial = m.id
-      WHERE mp.idprestamo = $1
-    `;
+    SELECT 
+      mp.idmaterial,
+      m.nombrematerial AS nombrematerial,
+      mp.cantidad,
+      m.tipo
+    FROM material_prestamo mp
+    JOIN material m ON mp.idmaterial = m.id
+    WHERE mp.idprestamo = $1
+  `;
     const materialesResult = await pool.query(materialesQuery, [id]);
 
     res.json({
