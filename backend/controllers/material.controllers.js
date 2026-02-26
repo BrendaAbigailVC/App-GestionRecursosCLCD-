@@ -164,7 +164,7 @@ const getHistorialMaterial = async (req, res, next) => {
         mh.*,
         e.nombre AS nombre_empleado
       FROM material_historial mh
-      JOIN empleado e ON mh.idempleado = e.id
+      LEFT JOIN empleado e ON mh.idempleado = e.id
       WHERE mh.idmaterial = $1
       ORDER BY mh.fecha_evento DESC
       `,
@@ -183,7 +183,43 @@ const getHistorialMaterial = async (req, res, next) => {
   }
 };
 
-const getGestionarHistorialYEstadoMaterial = async (req, res) => {
+
+const getMaterialesIncidencias = async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const query = `
+      SELECT 
+        m.id,
+        m.nombre,
+        mh.fecha_evento AS fecha,
+        mh.idprestamo,
+        e.nombre AS reportadoPor,
+        mh.descripcion_evento AS comentario,
+        m.estado
+      FROM material m
+      JOIN material_historial mh ON mh.idmaterial = m.id
+      LEFT JOIN empleado e ON mh.idempleado = e.id
+      WHERE m.estado IN (2, 3)
+      AND mh.id = (
+        SELECT MAX(id) FROM material_historial 
+        WHERE idmaterial = m.id
+      )
+      ORDER BY mh.fecha_evento DESC
+    `;
+
+    const result = await client.query(query);
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
+  }
+};
+
+const putHistorialYEstadoMaterial = async (req, res) => {
   const { id } = req.params;
   const { nuevoEstado, tipoEvento, descripcion, nombreTecnico } = req.body;
 
@@ -244,5 +280,6 @@ module.exports = {
   deleteMaterial,
   updateMaterial,
   getHistorialMaterial,
-  getGestionarHistorialYEstadoMaterial,
+  getMaterialesIncidencias,
+  putHistorialYEstadoMaterial
 };
