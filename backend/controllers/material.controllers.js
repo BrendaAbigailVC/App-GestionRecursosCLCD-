@@ -189,31 +189,30 @@ const getMaterialesIncidencias = async (req, res) => {
 
   try {
     const query = `
-      SELECT 
+      SELECT DISTINCT ON (mh.idmaterial)
         m.id,
-        m.nombre,
+        m.nombrematerial AS nombre,
         mh.fecha_evento AS fecha,
         mh.idprestamo,
-        e.nombre AS reportadoPor,
+        e.nombre AS "reportadoPor",
         mh.descripcion_evento AS comentario,
-        m.estado
-      FROM material m
-      JOIN material_historial mh ON mh.idmaterial = m.id
-      LEFT JOIN empleado e ON mh.idempleado = e.id
-      WHERE m.estado IN (2, 3)
-      AND mh.id = (
-        SELECT MAX(id) FROM material_historial 
-        WHERE idmaterial = m.id
-      )
-      ORDER BY mh.fecha_evento DESC
+        mh.estado_nuevo AS estado
+      FROM material_historial mh
+      JOIN material m 
+        ON mh.idmaterial = m.id
+      LEFT JOIN empleado e 
+        ON mh.idempleado = e.id
+      WHERE mh.estado_nuevo IN (2, 3)
+      ORDER BY mh.idmaterial, mh.fecha_evento DESC
     `;
 
     const result = await client.query(query);
-    res.json(result.rows);
+
+    res.status(200).json(result.rows);
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    console.error("Error en getMaterialesIncidencias:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   } finally {
     client.release();
   }
