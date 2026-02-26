@@ -39,7 +39,6 @@ const FinalizarPrestamo = () => {
   const { id } = useParams();
   const [prestamo, setPrestamo] = useState(null);
   const [materiales, setMateriales] = useState([]);
-  const [observacionesDevolucion, setObservacionesDevolucion] = useState("");
   const [incidencias, setIncidencias] = useState({});
 
   useEffect(() => {
@@ -71,9 +70,14 @@ const FinalizarPrestamo = () => {
     fetchPrestamo();
   }, [id, navigate]);
 
-  const traducirTipo = (tipo) => {
+  const traducirTipoPrestamo = (tipo) => {
     return tipo === 0 ? "Interno" : tipo === 1 ? "Externo" : "Desconocido";
   };
+
+  const traducirTipoMaterial = (tipo) => {
+    return tipo === 0 ? "Inventariado" : "Consumible";
+  };
+
 
   const finalizarPrestamo = async () => {
     console.log("Incidencias recibidas:", incidencias);
@@ -129,21 +133,52 @@ const FinalizarPrestamo = () => {
         });
         return false;
       }
+      if (mat.tipo === 1) {
+        if (
+          inc.cantidadDevuelta === undefined ||
+          inc.cantidadDevuelta === "" ||
+          inc.cantidadDevuelta < 0 ||
+          inc.cantidadDevuelta > mat.cantidad
+        ) {
+          Swal.fire(
+            "Cantidad inválida",
+            `La cantidad devuelta de ${mat.nombrematerial} debe estar entre 0 y ${mat.cantidad}`,
+            "warning"
+          );
+          return false;
+        }
+      }
     }
     return true;
   };
 
-  const generarObservaciones = () => {
-    return materiales
-      .map((mat) => {
-        const inc = incidencias[mat.idmaterial];
+const generarObservaciones = () => {
+  return materiales
+    .map((mat) => {
+      const inc = incidencias[mat.idmaterial];
+      if (mat.tipo === 0) {
         if (inc.estado === "bien") {
           return `${mat.nombrematerial}: sin incidencias`;
         }
         return `${mat.nombrematerial}: ${inc.comentario}`;
-      })
-      .join(" | ");
-  };
+      }
+      
+      if (mat.tipo === 1) {
+        const devuelta = inc.cantidadDevuelta ?? 0;
+
+        if (devuelta === mat.cantidad) {
+          return `${mat.nombrematerial}: devolución completa (${devuelta}/${mat.cantidad})`;
+        }
+
+        if (devuelta > 0) {
+          return `${mat.nombrematerial}: devolución parcial (${devuelta}/${mat.cantidad})`;
+        }
+
+        return `${mat.nombrematerial}: no se devolvió (${devuelta}/${mat.cantidad})`;
+      }
+    })
+    .join(" | ");
+};
 
   return (
     <>
@@ -179,7 +214,7 @@ const FinalizarPrestamo = () => {
               disabled
             />
             <Input2
-              value={`Tipo: ${traducirTipo(prestamo.tipoPrestamo)}`}
+              value={`Tipo: ${traducirTipoPrestamo(prestamo.tipoPrestamo)}`}
               disabled
             />
             <Input2 value={`UEA: ${prestamo.uea}`} disabled />
@@ -204,45 +239,70 @@ const FinalizarPrestamo = () => {
                     <td>{mat.nombrematerial}</td>
                     <td>{mat.cantidad}</td>
                     <td>
-                      <label>
-                        <input
-                          type="radio"
-                          name={`estado-${mat.idmaterial}`}
-                          checked={incidencias[mat.idmaterial]?.estado === "bien"}
-                          onChange={() =>
-                            setIncidencias({
-                              ...incidencias,
-                              [mat.idmaterial]: { estado: "bien", comentario: "" },
-                            })
-                          }
-                        />
-                        Sin problema
-                      </label>
-                      <label style={{ marginLeft: "1rem" }}>
-                        <input
-                          type="radio"
-                          name={`estado-${mat.idmaterial}`}
-                          checked={incidencias[mat.idmaterial]?.estado === "mal"}
-                          onChange={() =>
-                            setIncidencias({
-                              ...incidencias,
-                              [mat.idmaterial]: { estado: "mal", comentario: "" },
-                            })
-                          }
-                        />
-                        Con incidencia
-                      </label>
+                      {mat.tipo === 0 && (
+                        <>
+                          <label>
+                            <input
+                              type="radio"
+                              name={`estado-${mat.idmaterial}`}
+                              checked={incidencias[mat.idmaterial]?.estado === "bien"}
+                              onChange={() =>
+                                setIncidencias({
+                                  ...incidencias,
+                                  [mat.idmaterial]: { estado: "bien", comentario: "" },
+                                })
+                              }
+                            />
+                            Sin problema
+                          </label>
+                          <label style={{ marginLeft: "1rem" }}>
+                            <input
+                              type="radio"
+                              name={`estado-${mat.idmaterial}`}
+                              checked={incidencias[mat.idmaterial]?.estado === "mal"}
+                              onChange={() =>
+                                setIncidencias({
+                                  ...incidencias,
+                                  [mat.idmaterial]: { estado: "mal", comentario: "" },
+                                })
+                              }
+                            />
+                            Con incidencia
+                          </label>
 
-                      {incidencias[mat.idmaterial]?.estado === "mal" && (
+                          {incidencias[mat.idmaterial]?.estado === "mal" && (
+                            <Input2
+                              placeholder="Describe el problema"
+                              value={incidencias[mat.idmaterial]?.comentario || ""}
+                              onChange={(e) =>
+                                setIncidencias({
+                                  ...incidencias,
+                                  [mat.idmaterial]: {
+                                    ...incidencias[mat.idmaterial],
+                                    comentario: e.target.value,
+                                  },
+                                })
+                              }
+                            />
+                          )}
+                        </>
+                      )}
+                      {mat.tipo === 1 && (
                         <Input2
-                          placeholder="Describe el problema"
-                          value={incidencias[mat.idmaterial]?.comentario || ""}
+                          type="number"
+                          min="0"
+                          max={mat.cantidad}
+                          placeholder="Cantidad devuelta"
+                          value={
+                            incidencias[mat.idmaterial]?.cantidadDevuelta ?? ""
+                          }
                           onChange={(e) =>
                             setIncidencias({
                               ...incidencias,
                               [mat.idmaterial]: {
+                                estado: "bien",
                                 ...incidencias[mat.idmaterial],
-                                comentario: e.target.value,
+                                cantidadDevuelta: Number(e.target.value),
                               },
                             })
                           }

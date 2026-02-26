@@ -325,7 +325,17 @@ const finalizarPrestamo = async (req, res, next) => {
           estadoNuevo = ESTADOS.DISPONIBLE;
         }
         tipoEvento = 2;
-        descripcionEvento = "Devolución sin incidencias";
+        if (tipo === 1) {
+          if (cantidadDevuelta === cantidad) {
+            descripcionEvento = `Devolución completa (${cantidadDevuelta}/${cantidad})`;
+          } else if (cantidadDevuelta > 0) {
+            descripcionEvento = `Devolución parcial (${cantidadDevuelta}/${cantidad})`;
+          } else {
+            descripcionEvento = `No se devolvió (${cantidadDevuelta}/${cantidad})`;
+          }
+        } else {
+          descripcionEvento = "Devolución sin incidencias";
+        }
       }
       await client.query(
         `UPDATE material 
