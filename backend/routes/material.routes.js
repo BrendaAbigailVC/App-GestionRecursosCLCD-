@@ -13,12 +13,14 @@ const {
 const router = Router();
 
 router.get('/materiales', getAllMateriales);
+router.get('/material/incidencias', getMaterialesIncidencias);
+router.get('/material/:id/historial', getHistorialMaterial);
+router.put('/material/:id/gestionar', putHistorialYEstadoMaterial);
 router.get('/material/:id', getMaterial);
 router.post('/material', createMaterial);
 router.delete('/material/:id', deleteMaterial);
 router.put('/material/:id', updateMaterial);
-router.get('/material/incidencias', getMaterialesIncidencias);
-router.get('/material/:id/historial', getHistorialMaterial);
-router.put('/material/:id/gestionar', putHistorialYEstadoMaterial);
+
+
 
 module.exports = router;
