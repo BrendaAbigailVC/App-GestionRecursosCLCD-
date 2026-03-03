@@ -181,7 +181,7 @@ const GrupoInput = styled.div`
 `;
 
 const Label = styled.label`
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: #000000;
 `;
@@ -408,9 +408,9 @@ const IncidenciasMateriales = () => {
           <ModalContenido>
 
             <HeaderModal>
-              <h4 style={{ color: "#000000", margin: 0 }}>
+              <h3 style={{ color: "#000000", margin: 0 }}>
                 Gestionar Material
-              </h4>
+              </h3>
             </HeaderModal>
 
             <div className="mb-3">
