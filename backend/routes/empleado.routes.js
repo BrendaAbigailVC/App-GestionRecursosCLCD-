@@ -10,6 +10,7 @@ const {
   getPermisosEmpleado,
   getEmpleadoPermisos,
   updateEmpleadoPermisos,
+  getTecnicos,
 } = require("../controllers/empleado.controllers");
 
 const router = Router();
@@ -24,5 +25,6 @@ router.get("/estados-empleado", getEstadosEmpleado);
 router.get("/permisos-empleado", getPermisosEmpleado);
 router.get("/empleado/:id/permisos", getEmpleadoPermisos);
 router.post("/empleado/:id/permisos", updateEmpleadoPermisos);
+router.get("/tecnicos", getTecnicos);
 
 module.exports = router;

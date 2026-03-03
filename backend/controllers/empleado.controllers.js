@@ -308,6 +308,25 @@ const updateEmpleadoPermisos = async (req, res, next) => {
   }
 };
 
+const getTecnicos = async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        e.id,
+        e.noeconomico,
+        (e.nombre || ' ' || e.apellidopaterno || ' ' || e.apellidomaterno) AS nombre_completo
+      FROM empleado e
+      WHERE e.tipo = 1
+      AND e.estado = 0
+      ORDER BY e.nombre ASC`
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllEmpleados,
   getEmpleado,
@@ -319,4 +338,5 @@ module.exports = {
   getPermisosEmpleado,
   getEmpleadoPermisos,
   updateEmpleadoPermisos,
+  getTecnicos,
 };
