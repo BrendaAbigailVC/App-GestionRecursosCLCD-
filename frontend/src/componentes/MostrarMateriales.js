@@ -5,6 +5,13 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import BotonAtras from "../elementos/BotonAtras";
 
+const SelectFiltro = styled.select`
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+`;
+
 const Tabla = styled.table`
   width: 90%;
   margin: 20px auto;
@@ -160,7 +167,7 @@ const MostrarMateriales = () => {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
-        <select
+       <SelectFiltro
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
           style={{ padding: "10px", marginLeft: "10px" }}
@@ -171,7 +178,7 @@ const MostrarMateriales = () => {
           <option value="2">Con incidencia</option>
           <option value="3">En reparación</option>
           <option value="4">Dado de baja</option>
-        </select>
+        </SelectFiltro>
       </ContenedorBusqueda>
 
       <Tabla>
