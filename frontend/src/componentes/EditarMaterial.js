@@ -144,6 +144,9 @@ const EditarMaterial = () => {
         icon: "success",
         title: "Material actualizado",
         text: "El material ha sido actualizado con éxito.",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
       });
     } catch (error) {
       console.error("Error al actualizar material:", error);
@@ -167,7 +170,7 @@ const EditarMaterial = () => {
         </ContenedorHeader>
       </Header>
 
-      <BotonAtras ruta="/materiales" />
+      <BotonAtras ruta="/mostrar-materiales" />
       <ImagenMotas src={imagen1} alt="MotasUam" />
 
       <FormularioRegistro onSubmit={handleSubmit}>
