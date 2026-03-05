@@ -173,6 +173,7 @@ const BotonGestionar = styled.button`
     color: white;
   }
 `;
+
 const GrupoInput = styled.div`
   display: flex;
   flex-direction: column;
@@ -181,7 +182,7 @@ const GrupoInput = styled.div`
 `;
 
 const Label = styled.label`
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #000000;
 `;
@@ -223,6 +224,26 @@ const CeldaEstado = styled.td`
   color: ${(props) => props.color};
 `;
 
+const ContenedorFiltros = styled.div`
+  display: flex;
+  gap: 10px;
+  margin: 20px 10px;
+`;
+
+const BotonFiltro = styled.button`
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+
+  background: ${(props) => (props.activo ? "#4a89dc" : "#e0e0e0")};
+  color: ${(props) => (props.activo ? "white" : "#333")};
+
+  box-shadow: ${(props) =>
+    props.activo ? "0 5px 15px rgba(0,0,0,0.2)" : "none"};
+`;
+
 const traducirEstado = (estado) => {
   switch (estado) {
     case 0:
@@ -240,15 +261,17 @@ const traducirEstado = (estado) => {
   }
 };
 
+
 const IncidenciasMateriales = () => {
   const [materiales, setMateriales] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [materialSeleccionado, setMaterialSeleccionado] = useState(null);
-
+  const [filtroEstado, setFiltroEstado] = useState("incidencias");
   const [descripcion, setDescripcion] = useState("");
   const [loading, setLoading] = useState(false);
   const [tecnicos, setTecnicos] = useState([]);
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState("");
+  const [nuevoEstado, setNuevoEstado] = useState(null);
 
   useEffect(() => {
     cargarDatos();
@@ -292,14 +315,6 @@ const IncidenciasMateriales = () => {
   };
 
   const gestionar = async (nuevoEstado, tipoEvento) => {
-    if (!descripcion.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Descripción requerida",
-        text: "La descripción es obligatoria",
-      });
-      return;
-    }
 
     if (nuevoEstado === 3 && !tecnicoSeleccionado) {
       Swal.fire({
@@ -309,6 +324,24 @@ const IncidenciasMateriales = () => {
       });
       return;
     }
+
+    if (
+      (nuevoEstado === 0 || nuevoEstado === 4) &&
+      !descripcion.trim()
+    ) {
+      Swal.fire({
+        icon: "warning",
+        title: "Comentario requerido",
+        text: "Debe escribir una descripción.",
+      });
+      return;
+    }
+
+    const descripcionFinal =
+      descripcion.trim() ||
+      (nuevoEstado === 3
+        ? materialSeleccionado.comentario
+        : "Actualización de estado");
 
     try {
       console.log("ID que estoy enviando:", materialSeleccionado.id);
@@ -320,7 +353,7 @@ const IncidenciasMateriales = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nuevoEstado,
-          descripcion,
+          descripcion: descripcionFinal,
           idTecnico: nuevoEstado === 3 ? tecnicoSeleccionado : null,
           idEmpleado: idEmpleado
         })
@@ -342,7 +375,11 @@ const IncidenciasMateriales = () => {
 
   const pendientes = materiales.filter(m => m.estado === 2).length;
   const enReparacion = materiales.filter(m => m.estado === 3).length;
-
+  const materialesFiltrados = materiales.filter((m) => {
+    if (filtroEstado === "incidencias") return m.estado === 2;
+    if (filtroEstado === "reparacion") return m.estado === 3;
+    return true;
+  });
   return (
     <>
       <Helmet>
@@ -368,38 +405,68 @@ const IncidenciasMateriales = () => {
           <p>En Reparación</p>
         </CardStat>
       </ContenedorStats>
+      <ContenedorFiltros>
 
+        <BotonFiltro
+          activo={filtroEstado === "incidencias"}
+          onClick={() => setFiltroEstado("incidencias")}
+        >
+          Incidencias
+        </BotonFiltro>
+
+        <BotonFiltro
+          activo={filtroEstado === "reparacion"}
+          onClick={() => setFiltroEstado("reparacion")}
+        >
+          En reparación
+        </BotonFiltro>
+
+      </ContenedorFiltros>
       <Tabla>
         <EncabezadoTabla>
           <FilaTabla>
             <CeldaEncabezado>ID</CeldaEncabezado>
             <CeldaEncabezado>Material</CeldaEncabezado>
             <CeldaEncabezado>Fecha incidencia</CeldaEncabezado>
-            <CeldaEncabezado>Préstamo</CeldaEncabezado>
+            {filtroEstado === "incidencias" && (
+              <CeldaEncabezado>Préstamo</CeldaEncabezado>
+            )}
+
             <CeldaEncabezado>Reportado por</CeldaEncabezado>
             <CeldaEncabezado>Comentario</CeldaEncabezado>
+            {filtroEstado === "reparacion" && (
+              <CeldaEncabezado>Técnico</CeldaEncabezado>
+            )}
             <CeldaEncabezado>Estado</CeldaEncabezado>
             <CeldaEncabezado>Acción</CeldaEncabezado>
+
           </FilaTabla>
         </EncabezadoTabla>
         <CuerpoTabla>
-          {materiales.length === 0 ? (
+          {materialesFiltrados.length === 0 ? (
             <tr>
               <td colSpan="8" className="text-center">
-                No hay incidencias abiertas
+                No hay materiales en esta sección
               </td>
             </tr>
           ) : (
-            materiales.map((m) => {
+            materialesFiltrados.map((m) => {
               const estadoInfo = traducirEstado(m.estado);
               return (
                 <FilaTabla key={m.id}>
                   <Celda>{m.id}</Celda>
                   <Celda>{m.nombre}</Celda>
-                  <Celda>{m.fecha}</Celda>
-                  <Celda>{m.idprestamo}</Celda>
+                  <Celda>
+                    {m.fecha ? new Date(m.fecha).toLocaleDateString() : "-"}
+                  </Celda>
+                  {filtroEstado === "incidencias" && (
+                    <Celda>{m.idprestamo}</Celda>
+                  )}
                   <Celda>{m.reportadoPor}</Celda>
                   <Celda>{m.comentario}</Celda>
+                  {filtroEstado === "reparacion" && (
+                    <Celda>{m.tecnico || "Sin asignar"}</Celda>
+                  )}
                   <CeldaEstado color={estadoInfo.color}>
                     {estadoInfo.texto}
                   </CeldaEstado>
@@ -408,6 +475,8 @@ const IncidenciasMateriales = () => {
                       Gestionar
                     </BotonGestionar>
                   </Celda>
+
+
                 </FilaTabla>
               );
             })
@@ -444,10 +513,11 @@ const IncidenciasMateriales = () => {
             </div>
 
             <GrupoInput>
-              <Label>Descripción *</Label>
+              <Label>
+                Descripción:
+              </Label>
               <TextAreaEstilizado
                 rows="3"
-                placeholder="Describe la incidencia o acción realizada..."
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 error={!descripcion.trim()}
@@ -456,7 +526,7 @@ const IncidenciasMateriales = () => {
 
             {materialSeleccionado.estado === 2 && (
               <GrupoInput>
-                <Label>Nombre del técnico *</Label>
+                <Label>Técnico asignado *</Label>
                 <select
                   value={tecnicoSeleccionado}
                   onChange={(e) => setTecnicoSeleccionado(e.target.value)}
@@ -513,7 +583,7 @@ const IncidenciasMateriales = () => {
                     disabled={loading}
                     onClick={() => gestionar(0, 7)}
                   >
-                    ✔ Marcar como reparado
+                    Marcar como reparado
                   </BotonAccion>
 
                   <BotonAccion
