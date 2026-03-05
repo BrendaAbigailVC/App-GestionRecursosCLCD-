@@ -299,8 +299,7 @@ const finalizarPrestamo = async (req, res, next) => {
     }
 
     for (const { idmaterial, cantidad, tipo } of materialesRes.rows) {
-      const inc = incidencias[idmaterial];
-      if (!inc) continue;
+      const inc = incidencias?.[idmaterial] || {};
       const cantidadDevuelta = tipo === 1 ? (inc.cantidadDevuelta ?? cantidad) : cantidad;
       const estadoAnteriorRes = await client.query(
         "SELECT estado, cantidad FROM material WHERE id = $1",
@@ -346,7 +345,7 @@ const finalizarPrestamo = async (req, res, next) => {
 
       await client.query(
         `INSERT INTO material_historial
-         (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, nombre_tecnico, estado_anterior, estado_nuevo)
+         (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, idtecnico, estado_anterior, estado_nuevo)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [idmaterial, id, idEmpleado, tipoEvento, descripcionEvento, null, estadoAnterior, estadoNuevo]
       );
