@@ -189,7 +189,7 @@ const createPrestamo = async (req, res, next) => {
       const { idMaterial, cantidad } = material;
 
       const materialDB = await client.query(
-        "SELECT cantidad FROM material WHERE id = $1",
+        "SELECT cantidad, tipo, estado FROM material WHERE id = $1",
         [idMaterial]
       );
 
@@ -209,15 +209,29 @@ const createPrestamo = async (req, res, next) => {
 
       const estadoAnterior = materialDB.rows[0].estado ?? ESTADOS.DISPONIBLE;
 
-      await client.query(
-        "UPDATE material SET cantidad = cantidad - $1, estado = $2 WHERE id = $3",
-        [cantidad, ESTADOS.PRESTADO, idMaterial]
-      );
+      const esConsumible = materialDB.rows[0].tipo === 1;
+
+      if (esConsumible) {
+
+        await client.query(
+          "UPDATE material SET cantidad = cantidad - $1 WHERE id = $2",
+          [cantidad, idMaterial]
+        );
+      } else {
+
+        await client.query(
+          "UPDATE material SET cantidad = cantidad - $1, estado = $2 WHERE id = $3",
+          [cantidad, ESTADOS.PRESTADO, idMaterial]
+        );
+      }
+
 
       await client.query(
         "INSERT INTO material_prestamo (IdPrestamo, IdMaterial, Cantidad) VALUES ($1, $2, $3)",
         [id, idMaterial, cantidad]
       );
+
+      const estadoNuevo = esConsumible ? estadoAnterior : ESTADOS.PRESTADO;
 
       await client.query(
         `INSERT INTO material_historial 
@@ -230,7 +244,7 @@ const createPrestamo = async (req, res, next) => {
           1,
           `Préstamo asignado a alumno ${idAlumno}`,
           estadoAnterior,
-          ESTADOS.PRESTADO
+          estadoNuevo,
         ]
       );
     }
