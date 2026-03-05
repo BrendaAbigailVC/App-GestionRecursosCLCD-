@@ -246,11 +246,13 @@ const IncidenciasMateriales = () => {
   const [materialSeleccionado, setMaterialSeleccionado] = useState(null);
 
   const [descripcion, setDescripcion] = useState("");
-  const [nombreTecnico, setNombreTecnico] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tecnicos, setTecnicos] = useState([]);
+  const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState("");
 
   useEffect(() => {
     cargarDatos();
+    cargarTecnicos();
   }, []);
 
   const cargarDatos = async () => {
@@ -267,10 +269,20 @@ const IncidenciasMateriales = () => {
     }
   };
 
+  const cargarTecnicos = async () => {
+    try {
+      const res = await fetch("http://148.206.162.62:4000/tecnicos");
+      const data = await res.json();
+      setTecnicos(data);
+    } catch (error) {
+      console.error("Error al cargar técnicos:", error);
+    }
+  };
+
   const abrirModal = (material) => {
     setMaterialSeleccionado(material);
     setDescripcion("");
-    setNombreTecnico("");
+    setTecnicoSeleccionado("");
     setModalOpen(true);
   };
 
@@ -289,11 +301,11 @@ const IncidenciasMateriales = () => {
       return;
     }
 
-    if (nuevoEstado === 3 && !nombreTecnico.trim()) {
+    if (nuevoEstado === 3 && !tecnicoSeleccionado) {
       Swal.fire({
         icon: "warning",
         title: "Técnico requerido",
-        text: "Debe ingresar el nombre del técnico",
+        text: "Debe seleccionar un técnico",
       });
       return;
     }
@@ -309,7 +321,7 @@ const IncidenciasMateriales = () => {
         body: JSON.stringify({
           nuevoEstado,
           descripcion,
-          nombreTecnico: nuevoEstado === 3 ? nombreTecnico : null,
+          idTecnico: nuevoEstado === 3 ? tecnicoSeleccionado : null,
           idEmpleado: idEmpleado
         })
       });
@@ -445,13 +457,22 @@ const IncidenciasMateriales = () => {
             {materialSeleccionado.estado === 2 && (
               <GrupoInput>
                 <Label>Nombre del técnico *</Label>
-                <InputEstilizado
-                  type="text"
-                  placeholder="Ej. Juan Pérez"
-                  value={nombreTecnico}
-                  onChange={(e) => setNombreTecnico(e.target.value)}
-                  error={!nombreTecnico.trim()}
-                />
+                <select
+                  value={tecnicoSeleccionado}
+                  onChange={(e) => setTecnicoSeleccionado(e.target.value)}
+                  style={{
+                    padding: "12px",
+                    borderRadius: "10px",
+                    border: "1.8px solid #e0e0e0",
+                  }}
+                >
+                  <option value="">Seleccione un técnico</option>
+                  {tecnicos.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nombre_completo}
+                    </option>
+                  ))}
+                </select>
               </GrupoInput>
             )}
 

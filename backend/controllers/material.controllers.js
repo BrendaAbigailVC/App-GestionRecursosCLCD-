@@ -194,9 +194,11 @@ const getMaterialesIncidencias = async (req, res) => {
         m.nombrematerial AS nombre,
         mh.fecha_evento AS fecha,
         mh.idprestamo,
-        e.nombre AS "reportadoPor",
+        (e.nombre || ' ' || e.apellidopaterno) AS "reportadoPor",
         mh.descripcion_evento AS comentario,
-        m.estado
+        m.estado,
+        mh.idtecnico,
+         (t.nombre || ' ' || t.apellidopaterno) AS tecnico
       FROM material m
       LEFT JOIN LATERAL (
           SELECT *
@@ -207,6 +209,8 @@ const getMaterialesIncidencias = async (req, res) => {
       ) mh ON true
       LEFT JOIN empleado e 
           ON mh.idempleado = e.id
+      LEFT JOIN empleado t
+          ON mh.idtecnico = t.id
       WHERE m.estado IN (2, 3)
       ORDER BY mh.fecha_evento DESC NULLS LAST
     `;
@@ -225,7 +229,7 @@ const getMaterialesIncidencias = async (req, res) => {
 
 const putHistorialYEstadoMaterial = async (req, res) => {
   const { id } = req.params;
-  const { nuevoEstado, descripcion, nombreTecnico, idEmpleado } = req.body;
+  const { nuevoEstado, descripcion, idTecnico, idEmpleado } = req.body;
 
   const client = await pool.connect();
 
@@ -284,7 +288,7 @@ else if (nuevoEstado === 4) {
     await client.query(
       `INSERT INTO material_historial 
         (idmaterial, idprestamo, idempleado, tipo_evento, descripcion_evento, 
-        nombre_tecnico, estado_anterior, estado_nuevo)
+        idtecnico, estado_anterior, estado_nuevo)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         id,
@@ -292,7 +296,7 @@ else if (nuevoEstado === 4) {
         idEmpleado,
         tipoEvento,
         descripcion,
-        nombreTecnico || null,
+        idTecnico || null,
         estadoAnterior,
         nuevoEstado
       ]
