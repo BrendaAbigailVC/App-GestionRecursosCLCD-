@@ -83,7 +83,11 @@ const BotonHistorial = styled.button`
   }
 `;
 
-const traducirEstado = (estado) => {
+const traducirEstado = (estado, tipo, cantidad) => {
+  if (tipo === 1 && cantidad === 0) {
+    return { texto: "Agotado", color: "red" };
+  }
+
   switch (estado) {
     case 0:
       return { texto: "Disponible", color: "green" };
@@ -99,6 +103,8 @@ const traducirEstado = (estado) => {
       return { texto: "Desconocido", color: "gray" };
   }
 };
+
+
 
 const CeldaEstado = styled.td`
   padding: 10px 15px;
@@ -167,7 +173,7 @@ const MostrarMateriales = () => {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
-       <SelectFiltro
+        <SelectFiltro
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
           style={{ padding: "10px", marginLeft: "10px" }}
@@ -200,7 +206,11 @@ const MostrarMateriales = () => {
 
         <CuerpoTabla>
           {materialesFiltrados.map((material) => {
-            const estadoInfo = traducirEstado(material.estado);
+            const estadoInfo = traducirEstado(
+              material.estado,
+              material.tipo,
+              material.cantidad
+            );
             return (
               <FilaTabla key={material.id}>
                 <Celda>{material.id}</Celda>
