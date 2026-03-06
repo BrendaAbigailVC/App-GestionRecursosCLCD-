@@ -160,9 +160,29 @@ const BotonCantidad = styled.button`
 `;
 
 const NumeroCantidad = styled.span`
-  min-width: 25px;
-  text-align: center;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 600;
+`;
+
+const InputCantidad = styled.input`
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  border: 0.5px solid #ccc;
+  border-radius: 6px;
+  font-weight: 600;
+  box-sizing: border-box;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  -moz-appearance: textfield;
 `;
 
 const LayoutPrincipal = styled.div`
@@ -584,30 +604,40 @@ const RegistrarPrestamo = () => {
                                 <Celda>{m.id}</Celda>
                                 <Celda>{m.nombrematerial}</Celda>
                                 <Celda>{m.cantidad}</Celda>
-                                <Celda>
-                                  <ControlCantidad>
-                                    <BotonCantidad
-                                      type="button"
-                                      onClick={() => disminuirCantidad(m.id)}
-                                      disabled={!carrito[m.id]}
-                                    >
-                                      -
-                                    </BotonCantidad>
+<Celda>
+  <ControlCantidad>
+    <BotonCantidad
+      type="button"
+      onClick={() => disminuirCantidad(m.id)}
+      disabled={!carrito[m.id]}
+    >
+      -
+    </BotonCantidad>
+    {m.tipo === 1 ? (
+      <InputCantidad
+        type="number"
+        min="0"
+        max={m.cantidad}
+        value={carrito[m.id] || 0}
+        onChange={(e) =>
+          cambiarCantidad(m.id, parseInt(e.target.value) || 0)
+        }
+      />
+    ) : (
+      <NumeroCantidad>
+        {carrito[m.id] || 0}
+      </NumeroCantidad>
+    )}
 
-                                    <NumeroCantidad>
-                                      {carrito[m.id] || 0}
-                                    </NumeroCantidad>
-
-                                    <BotonCantidad
-                                      type="button"
-                                      onClick={() => aumentarCantidad(m.id)}
-                                      disabled={(carrito[m.id] || 0) >= m.cantidad}
-                                    >
-                                      +
-                                    </BotonCantidad>
-                                  </ControlCantidad>
-
-                                </Celda>
+    <BotonCantidad
+      type="button"
+      onClick={() => aumentarCantidad(m.id)}
+      disabled={(carrito[m.id] || 0) >= m.cantidad}
+    >
+      +
+    </BotonCantidad>
+  </ControlCantidad>
+</Celda>
                               </FilaTabla>
                             ))}
                           </CuerpoTabla>
