@@ -123,7 +123,8 @@ const createPrestamo = async (req, res, next) => {
   try {
     const {
       id,
-      idAlumno,
+      solicitante_id,
+      solicitante_tipo,
       idEmpleado,
       estadoPrestamo,
       fechaPrestamo,
@@ -143,11 +144,33 @@ const createPrestamo = async (req, res, next) => {
       return res.status(400).json({ message: "El ID del préstamo ya existe" });
     }
 
-    const alumno = await pool.query("SELECT 1 FROM alumno WHERE id = $1", [
-      idAlumno,
-    ]);
-    if (alumno.rows.length === 0) {
-      return res.status(400).json({ message: "La matrícula no existe" });
+    if (!solicitante_id || !solicitante_tipo) {
+      return res.status(400).json({
+        message: "Debes indicar solicitante_id y solicitante_tipo",
+      });
+    }
+
+    let tabla = "";
+
+    if (solicitante_tipo === "ALUMNO") {
+      tabla = "alumno";
+    } else if (solicitante_tipo === "EMPLEADO") {
+      tabla = "empleado";
+    } else {
+      return res.status(400).json({
+        message: "Tipo de solicitante inválido",
+      });
+    }
+
+     const existeSolicitante = await pool.query(
+      `SELECT 1 FROM ${tabla} WHERE id = $1`,
+      [solicitante_id]
+    );
+
+    if (existeSolicitante.rows.length === 0) {
+      return res.status(400).json({
+        message: `${solicitante_tipo} no existe`,
+      });
     }
 
     const empleado = await pool.query("SELECT 1 FROM empleado WHERE id = $1", [
@@ -167,13 +190,13 @@ const createPrestamo = async (req, res, next) => {
 
     const result = await client.query(
       `INSERT INTO prestamo 
-        (ID, IdAlumno, IdEmpleado, EstadoPrestamo, FechaPrestamo, FechaDevolucion, 
-         UEA, Grupo, Observaciones, TipoPrestamo) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
-      RETURNING *`,
+        (id, solicitante_id, solicitante_tipo, idempleado, estadoprestamo, fechaprestamo, fechadevolucion, uea, grupo, observaciones, tipoprestamo) 
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       RETURNING *`,
       [
         id,
-        idAlumno,
+        solicitante_id,
+        solicitante_tipo,
         idEmpleado,
         estadoPrestamo,
         fechaPrestamo,
@@ -184,6 +207,8 @@ const createPrestamo = async (req, res, next) => {
         tipoPrestamo,
       ]
     );
+
+    const descripcion = `Préstamo asignado a ${solicitante_tipo.toLowerCase()} ${solicitante_id}`;
 
     for (const material of materiales) {
       const { idMaterial, cantidad } = material;
@@ -242,7 +267,7 @@ const createPrestamo = async (req, res, next) => {
           id,
           idEmpleado,
           1,
-          `Préstamo asignado a alumno ${idAlumno}`,
+          descripcion,
           estadoAnterior,
           estadoNuevo,
         ]

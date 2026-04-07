@@ -222,17 +222,17 @@ const TotalResumen = styled.div`
 const RegistrarPrestamo = () => {
   const navigate = useNavigate();
   const idEmpleado = localStorage.getItem("idUsuario");
-
+  const [empleados, setEmpleados] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
-  const [busquedaAlumno, setBusquedaAlumno] = useState("");
+  const [busquedaSolicitante, setBusquedaSolicitante] = useState("");
   const [materiales, setMateriales] = useState([]);
   const [busquedaMaterial, setBusquedaMaterial] = useState("");
   const [carrito, setCarrito] = useState({});
-  const [idAlumno, setIdAlumno] = useState("");
   const [idPrestamo, setIdPrestamo] = useState("");
   const [mostrarVistaPrevia, setMostrarVistaPrevia] = useState(false);
   const [erroresMensaje, setErroresMensaje] = useState({});
-  const [seccionActiva, setSeccionActiva] = useState("alumno");
+  const [seccionActiva, setSeccionActiva] = useState("Solicitante");
+  const [solicitante, setSolicitante] = useState(null);
 
   const [datosPrestamo, setDatosPrestamo] = useState({
     fechaPrestamo: "",
@@ -246,39 +246,46 @@ const RegistrarPrestamo = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const resMateriales = await fetch("http://148.206.162.62:4000/materiales");
-      const dataMateriales = await resMateriales.json();
-      setMateriales(dataMateriales);
+      try {
+        const resMateriales = await fetch("http://148.206.162.62:4000/materiales");
+        const dataMateriales = await resMateriales.json();
+        setMateriales(dataMateriales);
 
-      const resAlumnos = await fetch("http://148.206.162.62:4000/alumnos");
-      const dataAlumnos = await resAlumnos.json();
-      setAlumnos(dataAlumnos);
+        const resAlumnos = await fetch("http://148.206.162.62:4000/alumnos");
+        const dataAlumnos = await resAlumnos.json();
+        setAlumnos(dataAlumnos);
 
-      const resContador = await fetch(
-        `http://148.206.162.62:4000/prestamo/contador/${idEmpleado}`
-      );
-      const { contador } = await resContador.json();
-      const consecutivo = String(contador + 1).padStart(6, "0");
-      setIdPrestamo(`LABPRES-${idEmpleado}-${consecutivo}`);
+        const resEmpleados = await fetch("http://148.206.162.62:4000/empleados");
+        const dataEmpleados = await resEmpleados.json();
+        setEmpleados(dataEmpleados);
 
-      const today = new Date().toISOString().split("T")[0];
-      setDatosPrestamo((prev) => ({
-        ...prev,
-        fechaPrestamo: today,
-      }));
+        const resContador = await fetch(
+          `http://148.206.162.62:4000/prestamo/contador/${idEmpleado}`
+        );
+        const { contador } = await resContador.json();
+        const consecutivo = String(contador + 1).padStart(6, "0");
+        setIdPrestamo(`LABPRES-${idEmpleado}-${consecutivo}`);
+
+        const today = new Date().toISOString().split("T")[0];
+        setDatosPrestamo((prev) => ({
+          ...prev,
+          fechaPrestamo: today,
+        }));
+      } catch (error) {
+        console.error(error);
+        Swal.fire("Error", "No se pudieron cargar los datos", "error");
+      }
     };
     fetchData();
   }, [idEmpleado]);
 
-  const alumnoSeleccionado = alumnos.find(a => a.id === idAlumno);
   const hayMaterial = Object.values(carrito).some(c => c > 0);
-  const hayDisponibles = materiales.some(m => m.cantidad > 0);
 
   useEffect(() => {
-    if (idAlumno) {
+    if (solicitante) {
       setSeccionActiva("materiales");
     }
-  }, [idAlumno]);
+  }, [solicitante]);
 
 
   const cambiarCantidad = (id, cantidad) => {
@@ -292,7 +299,7 @@ const RegistrarPrestamo = () => {
   const validarCampos = () => {
     let errores = {};
 
-    if (!idAlumno) errores.general = "Selecciona un alumno.";
+    if (!solicitante) errores.general = "Selecciona un solicitante.";
     if (!hayMaterial) errores.carrito = "Agrega al menos un material.";
     if (!datosPrestamo.tipoPrestamo) errores.tipoPrestamo = "Selecciona tipo.";
     if (!datosPrestamo.uea) errores.uea = "UEA obligatoria.";
@@ -344,7 +351,8 @@ const RegistrarPrestamo = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: idPrestamo,
-          idAlumno,
+          solicitante_id: solicitante.id,
+          solicitante_tipo: solicitante.tipo,
           idEmpleado,
           estadoPrestamo: 0,
           ...datosPrestamo,
@@ -354,7 +362,6 @@ const RegistrarPrestamo = () => {
 
       if (res.ok) {
         setMostrarVistaPrevia(false);
-        const alumno = alumnos.find((a) => a.id === idAlumno);
         const materialesTexto = materialesPrestamo
           .map(({ idMaterial, cantidad }) => {
             const mat = materiales.find((m) => m.id === idMaterial);
@@ -367,16 +374,12 @@ const RegistrarPrestamo = () => {
         Swal.fire({
           icon: 'success',
           title: 'Préstamo registrado exitosamente',
-          text: `Matrícula: ${alumno?.matricula}\n` +
-            `Fecha de inicio: ${datosPrestamo.fechaPrestamo}\n` +
-            `Fecha de devolución: ${datosPrestamo.fechaDevolucion}\n\n` +
-            `Materiales prestados:\n${materialesTexto}`,
           showConfirmButton: false,
           timer: 2000,
           timerProgressBar: true
         });
 
-        setIdAlumno("");
+        setSolicitante(null);
         setDatosPrestamo((prev) => ({
           ...prev,
           fechaPrestamo: new Date().toISOString().split("T")[0],
@@ -408,18 +411,6 @@ const RegistrarPrestamo = () => {
     }
   };
 
-  const alumnosFiltrados = alumnos
-    .filter((a) => {
-      const filtro = busquedaAlumno.toLowerCase();
-      return (
-        a.matricula.toLowerCase().includes(filtro) ||
-        a.nombre.toLowerCase().includes(filtro) ||
-        a.apellidopaterno.toLowerCase().includes(filtro) ||
-        a.apellidomaterno.toLowerCase().includes(filtro)
-      );
-    })
-    .slice(0, 3);
-
   const materialesFiltrados = materiales
     .filter(
       (m) =>
@@ -439,10 +430,14 @@ const RegistrarPrestamo = () => {
 
 
   const aumentarCantidad = (id) => {
-    setCarrito((prev) => ({
-      ...prev,
-      [id]: (prev[id] || 0) + 1,
-    }));
+    const material = materiales.find(m => m.id === id);
+
+    setCarrito((prev) => {
+      const nuevaCantidad = (prev[id] || 0) + 1;
+      if (nuevaCantidad > material.cantidad) return prev;
+
+      return { ...prev, [id]: nuevaCantidad };
+    });
   };
 
   const disminuirCantidad = (id) => {
@@ -469,10 +464,25 @@ const RegistrarPrestamo = () => {
     0
   );
 
+  const solicitantesFiltrados = [
+    ...alumnos.map(a => ({
+      id: a.id,
+      tipo: "ALUMNO",
+      label: `${a.matricula} - ${a.nombre} ${a.apellidopaterno} ${a.apellidomaterno}`,
+      nombre: `${a.nombre} ${a.apellidopaterno} ${a.apellidomaterno}`
+    })),
+    ...empleados.map(e => ({
+      id: e.id,
+      tipo: "EMPLEADO",
+      label: `${e.noeconomico} - ${e.nombre} ${e.apellidopaterno} ${e.apellidomaterno}`,
+      nombre: `${e.nombre} ${e.apellidopaterno} ${e.apellidomaterno}`
+    }))
+  ].filter(s =>
+    s.label.toLowerCase().includes(busquedaSolicitante.toLowerCase())
+  ).slice(0, 5);
 
   return (
     <>
-
       <Helmet>
         <title>Registrar Préstamo</title>
       </Helmet>
@@ -489,23 +499,24 @@ const RegistrarPrestamo = () => {
               <HeaderSeccion
                 onClick={() =>
                   setSeccionActiva(
-                    seccionActiva === "alumno" ? "" : "alumno"
+                    seccionActiva === "Solicitante" ? "" : "Solicitante"
                   )
                 }
               >
-                1. Alumno
+                1. Seleccionar solicitante
               </HeaderSeccion>
-              <ContenidoSeccion abierto={seccionActiva === "alumno"}>
+
+              <ContenidoSeccion abierto={seccionActiva === "Solicitante"}>
                 <InputBusqueda
                   type="text"
                   placeholder="Buscar por matrícula, nombre o apellido"
-                  value={busquedaAlumno}
+                  value={busquedaSolicitante}
                   onChange={(e) => {
-                    setBusquedaAlumno(e.target.value);
-                    setIdAlumno("");
+                    setBusquedaSolicitante(e.target.value);
+                    setSolicitante(null);
                   }}
                 />
-                {busquedaAlumno && !idAlumno && (
+                {busquedaSolicitante && !solicitante && (
                   <div
                     style={{
                       backgroundColor: "#fff",
@@ -516,14 +527,12 @@ const RegistrarPrestamo = () => {
                       marginBottom: "1rem",
                     }}
                   >
-                    {alumnosFiltrados.map((a) => (
+                    {solicitantesFiltrados.map((s) => (
                       <div
-                        key={a.id}
+                        key={`${s.tipo}-${s.id}`}
                         onClick={() => {
-                          setIdAlumno(a.id);
-                          setBusquedaAlumno(
-                            `${a.matricula} - ${a.nombre} ${a.apellidopaterno}`
-                          );
+                          setSolicitante(s);
+                          setBusquedaSolicitante(s.label);
                         }}
                         style={{
                           padding: "10px",
@@ -531,22 +540,21 @@ const RegistrarPrestamo = () => {
                           borderBottom: "1px solid #eee",
                         }}
                       >
-                        {a.matricula} - {a.nombre} {a.apellidopaterno} {a.apellidomaterno}
+                        {s.label} ({s.tipo})
                       </div>
                     ))}
                   </div>
                 )}
-                {idAlumno && (
+                {solicitante && (
                   <ResumenBox>
                     <div style={{ marginBottom: "1rem" }}>
-                      <strong>Alumno seleccionado:</strong>{" "}
-                      {alumnos.find((a) => a.id === idAlumno)?.nombre}{" "}
-                      {alumnos.find((a) => a.id === idAlumno)?.apellidopaterno}
+                      <strong>{solicitante.tipo} seleccionado:</strong><br />
+                      {solicitante.nombre}
                     </div>
                     <button
                       onClick={() => {
-                        setIdAlumno("");
-                        setBusquedaAlumno("");
+                        setSolicitante(null);
+                        setBusquedaSolicitante("");
                       }}
                       style={{
                         marginLeft: "10px",
@@ -560,11 +568,11 @@ const RegistrarPrestamo = () => {
                   </ResumenBox>
                 )}
               </ContenidoSeccion>
-              <SeccionBloque bloqueado={!idAlumno}>
+              <SeccionBloque bloqueado={!solicitante}>
                 <HeaderSeccion
-                  bloqueado={!idAlumno}
+                  bloqueado={!solicitante}
                   onClick={() =>
-                    idAlumno &&
+                    solicitante &&
                     setSeccionActiva(
                       seccionActiva === "materiales" ? "" : "materiales"
                     )
@@ -573,12 +581,12 @@ const RegistrarPrestamo = () => {
                   2. Materiales
                 </HeaderSeccion>
                 <ContenidoSeccion abierto={seccionActiva === "materiales"}>
-                  {!idAlumno && (
+                  {!solicitante && (
                     <MensajeConError>
-                      Selecciona un alumno para habilitar materiales.
+                      Selecciona un solicitante para habilitar materiales.
                     </MensajeConError>
                   )}
-                  {idAlumno && (
+                  {solicitante && (
                     <>
                       <ContenedorBusqueda>
                         <InputBusqueda
@@ -604,40 +612,40 @@ const RegistrarPrestamo = () => {
                                 <Celda>{m.id}</Celda>
                                 <Celda>{m.nombrematerial}</Celda>
                                 <Celda>{m.cantidad}</Celda>
-<Celda>
-  <ControlCantidad>
-    <BotonCantidad
-      type="button"
-      onClick={() => disminuirCantidad(m.id)}
-      disabled={!carrito[m.id]}
-    >
-      -
-    </BotonCantidad>
-    {m.tipo === 1 ? (
-      <InputCantidad
-        type="number"
-        min="0"
-        max={m.cantidad}
-        value={carrito[m.id] || 0}
-        onChange={(e) =>
-          cambiarCantidad(m.id, parseInt(e.target.value) || 0)
-        }
-      />
-    ) : (
-      <NumeroCantidad>
-        {carrito[m.id] || 0}
-      </NumeroCantidad>
-    )}
+                                <Celda>
+                                  <ControlCantidad>
+                                    <BotonCantidad
+                                      type="button"
+                                      onClick={() => disminuirCantidad(m.id)}
+                                      disabled={!carrito[m.id]}
+                                    >
+                                      -
+                                    </BotonCantidad>
+                                    {m.tipo === 1 ? (
+                                      <InputCantidad
+                                        type="number"
+                                        min="0"
+                                        max={m.cantidad}
+                                        value={carrito[m.id] || 0}
+                                        onChange={(e) =>
+                                          cambiarCantidad(m.id, parseInt(e.target.value) || 0)
+                                        }
+                                      />
+                                    ) : (
+                                      <NumeroCantidad>
+                                        {carrito[m.id] || 0}
+                                      </NumeroCantidad>
+                                    )}
 
-    <BotonCantidad
-      type="button"
-      onClick={() => aumentarCantidad(m.id)}
-      disabled={(carrito[m.id] || 0) >= m.cantidad}
-    >
-      +
-    </BotonCantidad>
-  </ControlCantidad>
-</Celda>
+                                    <BotonCantidad
+                                      type="button"
+                                      onClick={() => aumentarCantidad(m.id)}
+                                      disabled={(carrito[m.id] || 0) >= m.cantidad}
+                                    >
+                                      +
+                                    </BotonCantidad>
+                                  </ControlCantidad>
+                                </Celda>
                               </FilaTabla>
                             ))}
                           </CuerpoTabla>
@@ -660,7 +668,7 @@ const RegistrarPrestamo = () => {
                   3. Datos del Préstamo
                 </HeaderSeccion>
                 <ContenidoSeccion abierto={seccionActiva === "datos"}>
-                  {!hayMaterial && idAlumno && (
+                  {!hayMaterial && solicitante && (
                     <MensajeConError>
                       Agrega al menos un material para continuar.
                     </MensajeConError>
@@ -747,10 +755,10 @@ const RegistrarPrestamo = () => {
               <Boton
                 as="button"
                 primario
-                disabled={!idAlumno || !hayMaterial}
+                disabled={!solicitante || !hayMaterial}
                 onClick={(e) => {
                   e.preventDefault();
-                  generarVistaPrevia(true);
+                  generarVistaPrevia();
                 }}
               >
                 Generar Préstamo
@@ -761,13 +769,13 @@ const RegistrarPrestamo = () => {
         <ResumenLateral>
           <h4>Resumen del Préstamo</h4>
 
-          {!idAlumno && <p>No hay alumno seleccionado.</p>}
+          {!solicitante && <p>No hay solicitante seleccionado.</p>}
 
-          {idAlumno && (
+          {solicitante && (
             <>
               <p>
-                <strong>Alumno:</strong><br />
-                {alumnoSeleccionado?.nombre} {alumnoSeleccionado?.apellidopaterno}
+                <strong>Solicitante:</strong><br />
+                {solicitante.nombre}
               </p>
 
               <hr />
@@ -801,7 +809,7 @@ const RegistrarPrestamo = () => {
             <h3>Confirmar Préstamo</h3>
             <p>
               <strong>Matrícula:</strong>{" "}
-              {alumnos.find((a) => a.id === idAlumno)?.matricula}
+              {solicitante?.label}
             </p>
             <p>
               <strong>Fecha inicio:</strong> {datosPrestamo.fechaPrestamo}
