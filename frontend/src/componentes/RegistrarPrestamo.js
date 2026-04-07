@@ -466,13 +466,13 @@ const RegistrarPrestamo = () => {
 
   const solicitantesFiltrados = [
     ...alumnos.map(a => ({
-      id: a.id,
+      id: a.matricula,
       tipo: "ALUMNO",
       label: `${a.matricula} - ${a.nombre} ${a.apellidopaterno} ${a.apellidomaterno}`,
       nombre: `${a.nombre} ${a.apellidopaterno} ${a.apellidomaterno}`
     })),
     ...empleados.map(e => ({
-      id: e.id,
+      id: e.noeconomico,
       tipo: "EMPLEADO",
       label: `${e.noeconomico} - ${e.nombre} ${e.apellidopaterno} ${e.apellidomaterno}`,
       nombre: `${e.nombre} ${e.apellidopaterno} ${e.apellidomaterno}`
@@ -808,7 +808,7 @@ const RegistrarPrestamo = () => {
           <ModalContenido>
             <h3>Confirmar Préstamo</h3>
             <p>
-              <strong>Matrícula:</strong>{" "}
+              <strong>Solicitante:</strong>{" "}
               {solicitante?.label}
             </p>
             <p>
