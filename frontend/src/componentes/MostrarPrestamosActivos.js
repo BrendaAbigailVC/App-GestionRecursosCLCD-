@@ -130,7 +130,7 @@ const MostrarPrestamosActivos = () => {
         <EncabezadoTabla>
           <FilaTabla>
             <CeldaEncabezado>ID</CeldaEncabezado>
-            <CeldaEncabezado>Matrícula</CeldaEncabezado>
+            <CeldaEncabezado>Codigo</CeldaEncabezado>
             <CeldaEncabezado>Empleado</CeldaEncabezado>
             <CeldaEncabezado>Fecha Devolución</CeldaEncabezado>
             <CeldaEncabezado>Tipo de Préstamo</CeldaEncabezado>
@@ -142,7 +142,7 @@ const MostrarPrestamosActivos = () => {
           {prestamosFiltrados.map((p) => (
             <FilaTabla key={p.id}>
               <Celda>{p.id}</Celda>
-              <Celda>{p.alumno_matricula}</Celda>
+              <Celda>{p.solicitante_codigo}</Celda>
               <Celda>{p.empleado_nombre}</Celda>
               <Celda>
                 {p.fechadevolucion
