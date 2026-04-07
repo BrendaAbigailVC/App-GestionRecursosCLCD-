@@ -130,7 +130,8 @@ const MostrarPrestamosActivos = () => {
         <EncabezadoTabla>
           <FilaTabla>
             <CeldaEncabezado>ID</CeldaEncabezado>
-            <CeldaEncabezado>Codigo</CeldaEncabezado>
+            <CeldaEncabezado>Codigo Solicitante</CeldaEncabezado>
+            <CeldaEncabezado>Nombre Solicitante</CeldaEncabezado>
             <CeldaEncabezado>Empleado</CeldaEncabezado>
             <CeldaEncabezado>Fecha Devolución</CeldaEncabezado>
             <CeldaEncabezado>Tipo de Préstamo</CeldaEncabezado>
@@ -143,6 +144,7 @@ const MostrarPrestamosActivos = () => {
             <FilaTabla key={p.id}>
               <Celda>{p.id}</Celda>
               <Celda>{p.solicitante_codigo}</Celda>
+              <Celda>{p.solicitante_nombre}</Celda>
               <Celda>{p.empleado_nombre}</Celda>
               <Celda>
                 {p.fechadevolucion

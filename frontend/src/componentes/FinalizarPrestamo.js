@@ -152,33 +152,33 @@ const FinalizarPrestamo = () => {
     return true;
   };
 
-const generarObservaciones = () => {
-  return materiales
-    .map((mat) => {
-      const inc = incidencias[mat.idmaterial];
-      if (mat.tipo === 0) {
-        if (inc.estado === "bien") {
-          return `${mat.nombrematerial}: sin incidencias`;
-        }
-        return `${mat.nombrematerial}: ${inc.comentario}`;
-      }
-      
-      if (mat.tipo === 1) {
-        const devuelta = inc.cantidadDevuelta ?? 0;
-
-        if (devuelta === mat.cantidad) {
-          return `${mat.nombrematerial}: devolución completa (${devuelta}/${mat.cantidad})`;
+  const generarObservaciones = () => {
+    return materiales
+      .map((mat) => {
+        const inc = incidencias[mat.idmaterial];
+        if (mat.tipo === 0) {
+          if (inc.estado === "bien") {
+            return `${mat.nombrematerial}: sin incidencias`;
+          }
+          return `${mat.nombrematerial}: ${inc.comentario}`;
         }
 
-        if (devuelta > 0) {
-          return `${mat.nombrematerial}: devolución parcial (${devuelta}/${mat.cantidad})`;
-        }
+        if (mat.tipo === 1) {
+          const devuelta = inc.cantidadDevuelta ?? 0;
 
-        return `${mat.nombrematerial}: no se devolvió (${devuelta}/${mat.cantidad})`;
-      }
-    })
-    .join(" | ");
-};
+          if (devuelta === mat.cantidad) {
+            return `${mat.nombrematerial}: devolución completa (${devuelta}/${mat.cantidad})`;
+          }
+
+          if (devuelta > 0) {
+            return `${mat.nombrematerial}: devolución parcial (${devuelta}/${mat.cantidad})`;
+          }
+
+          return `${mat.nombrematerial}: no se devolvió (${devuelta}/${mat.cantidad})`;
+        }
+      })
+      .join(" | ");
+  };
 
   return (
     <>
@@ -199,8 +199,19 @@ const generarObservaciones = () => {
           <FormularioRegistroSecciones>
             <TitutuloSecciones>Datos del Préstamo</TitutuloSecciones>
             <Input2 value={`ID: ${prestamo.id}`} disabled />
-            <Input2 value={`Matrícula: ${prestamo.matriculaAlumno}`} disabled />
-            <Input2 value={`Empleado: ${prestamo.numeroEconomico}`} disabled />
+
+            <Input2
+              value={`${prestamo.solicitante_tipo === "ALUMNO"
+                  ? "Matrícula"
+                  : "No. Económico"
+                }: ${prestamo.alumno_matricula}`}
+              disabled
+            />
+
+            <Input2
+              value={`Nombre: ${prestamo.alumno_nombre}`}
+              disabled
+            />
             <Input2
               value={`Fecha préstamo: ${new Date(
                 prestamo.fechaPrestamo

@@ -28,7 +28,7 @@ const getPrestamosActivos = async (req, res, next) => {
         END AS solicitante_codigo,
         CASE 
           WHEN p.solicitante_tipo = 'ALUMNO' THEN CONCAT(a.nombre, ' ', a.apellidopaterno)
-          ELSE e2.nombre
+          ELSE CONCAT(e2.nombre, ' ', e2.apellidopaterno)
         END AS solicitante_nombre,
         p.solicitante_tipo,
         e.nombre AS empleado_nombre
@@ -79,8 +79,17 @@ const getPrestamo = async (req, res, next) => {
     const prestamoQuery = `
       SELECT 
         p.id,
-        p.idalumno,
-        a.matricula AS matricula_alumno,
+        p.solicitante_id,
+        p.solicitante_tipo,
+        CASE 
+          WHEN p.solicitante_tipo = 'ALUMNO' THEN a.matricula
+          ELSE e2.noeconomico
+        END AS alumno_matricula,
+        CASE 
+          WHEN p.solicitante_tipo = 'ALUMNO' 
+            THEN CONCAT(a.nombre, ' ', a.apellidopaterno)
+          ELSE CONCAT(e2.nombre, ' ', e2.apellidopaterno)
+        END AS alumno_nombre,
         p.idempleado,
         e.noeconomico AS no_economico,
         p.tipoprestamo,
@@ -90,33 +99,39 @@ const getPrestamo = async (req, res, next) => {
         p.grupo,
         p.observaciones
       FROM prestamo p
-      JOIN alumno a ON p.idalumno = a.id
-      JOIN empleado e ON p.idempleado = e.id
+      LEFT JOIN alumno a 
+        ON p.solicitante_id = a.id 
+        AND p.solicitante_tipo = 'ALUMNO'
+      LEFT JOIN empleado e2 
+        ON p.solicitante_id = e2.id 
+        AND p.solicitante_tipo = 'EMPLEADO'
+      LEFT JOIN empleado e 
+        ON p.idempleado = e.id
       WHERE p.id = $1
     `;
     const prestamoResult = await pool.query(prestamoQuery, [id]);
-
     if (prestamoResult.rows.length === 0) {
       return res.status(404).json({ message: "Préstamo no encontrado" });
     }
-
     const prestamo = prestamoResult.rows[0];
 
     const materialesQuery = `
-    SELECT 
-      mp.idmaterial,
-      m.nombrematerial AS nombrematerial,
-      mp.cantidad,
-      m.tipo
-    FROM material_prestamo mp
-    JOIN material m ON mp.idmaterial = m.id
-    WHERE mp.idprestamo = $1
-  `;
+      SELECT 
+        mp.idmaterial,
+        m.nombrematerial,
+        mp.cantidad,
+        m.tipo
+      FROM material_prestamo mp
+      JOIN material m ON mp.idmaterial = m.id
+      WHERE mp.idprestamo = $1
+    `;
     const materialesResult = await pool.query(materialesQuery, [id]);
 
     res.json({
       id: prestamo.id,
-      matriculaAlumno: prestamo.matricula_alumno,
+      solicitante_tipo: prestamo.solicitante_tipo,
+      alumno_matricula: prestamo.alumno_matricula,
+      alumno_nombre: prestamo.alumno_nombre,
       numeroEconomico: prestamo.no_economico,
       fechaPrestamo: prestamo.fechaprestamo,
       fechaDevolucion: prestamo.fechadevolucion,
