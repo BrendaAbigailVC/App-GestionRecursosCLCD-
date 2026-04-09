@@ -186,7 +186,7 @@ const Historico = () => {
         <EncabezadoTabla>
           <FilaTabla>
             <CeldaEncabezado>ID</CeldaEncabezado>
-            <CeldaEncabezado>Matrícula</CeldaEncabezado>
+            <CeldaEncabezado>Solicitante</CeldaEncabezado>
             <CeldaEncabezado>Empleado</CeldaEncabezado>
             <CeldaEncabezado>Fecha Devolución</CeldaEncabezado>
             <CeldaEncabezado>Tipo de Préstamo</CeldaEncabezado>
@@ -224,7 +224,17 @@ const Historico = () => {
             return (
               <FilaTabla key={p.id}>
                 <Celda>{p.id}</Celda>
-                <Celda>{p.alumno_matricula}</Celda>
+                <Celda>
+                  <div>
+                    <strong>
+                      {p.solicitante_tipo === "ALUMNO"
+                        ? "Matrícula"
+                        : "No. Económico"}:
+                    </strong>{" "}
+                    {p.solicitante_codigo}
+                  </div>
+                  <div>{p.solicitante_nombre}</div>
+                </Celda>
                 <Celda>{p.empleado_nombre}</Celda>
                 <CeldaEstado color={color}>
                   {fechaDevolucion

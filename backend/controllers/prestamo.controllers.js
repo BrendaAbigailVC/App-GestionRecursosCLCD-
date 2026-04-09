@@ -4,13 +4,31 @@ const getAllPrestamos = async (req, res, next) => {
   try {
     const result = await pool.query(`
       SELECT 
-        p.*, 
-        a.matricula AS alumno_matricula, 
+        p.*,
+        CASE 
+          WHEN p.solicitante_tipo = 'ALUMNO' THEN a.matricula
+          ELSE e2.noeconomico
+        END AS solicitante_codigo,
+        CASE 
+          WHEN p.solicitante_tipo = 'ALUMNO' THEN CONCAT(a.nombre, ' ', a.apellidopaterno)
+          ELSE CONCAT(e2.nombre, ' ', e2.apellidopaterno)
+        END AS solicitante_nombre,
+        p.solicitante_tipo,
         e.nombre AS empleado_nombre
       FROM prestamo p
-      LEFT JOIN alumno a ON a.id = p.idalumno
-      LEFT JOIN empleado e ON e.id = p.idempleado
+
+      LEFT JOIN alumno a 
+        ON p.solicitante_id = a.id 
+        AND p.solicitante_tipo = 'ALUMNO'
+
+      LEFT JOIN empleado e2 
+        ON p.solicitante_id = e2.id 
+        AND p.solicitante_tipo = 'EMPLEADO'
+
+      LEFT JOIN empleado e 
+        ON e.id = p.idempleado
     `);
+
     res.json(result.rows);
   } catch (error) {
     next(error);
