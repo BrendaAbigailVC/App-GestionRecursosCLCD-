@@ -102,12 +102,12 @@ const getPrestamo = async (req, res, next) => {
         CASE 
           WHEN p.solicitante_tipo = 'ALUMNO' THEN a.matricula
           ELSE e2.noeconomico
-        END AS alumno_matricula,
+        END AS solicitante_codigo,
         CASE 
           WHEN p.solicitante_tipo = 'ALUMNO' 
             THEN CONCAT(a.nombre, ' ', a.apellidopaterno)
           ELSE CONCAT(e2.nombre, ' ', e2.apellidopaterno)
-        END AS alumno_nombre,
+        END AS solicitante_nombre,
         p.idempleado,
         e.noeconomico AS no_economico,
         p.tipoprestamo,
@@ -148,8 +148,8 @@ const getPrestamo = async (req, res, next) => {
     res.json({
       id: prestamo.id,
       solicitante_tipo: prestamo.solicitante_tipo,
-      alumno_matricula: prestamo.alumno_matricula,
-      alumno_nombre: prestamo.alumno_nombre,
+      solicitante_codigo: prestamo.solicitante_codigo,
+      solicitante_nombre: prestamo.solicitante_nombre,
       numeroEconomico: prestamo.no_economico,
       fechaPrestamo: prestamo.fechaprestamo,
       fechaDevolucion: prestamo.fechadevolucion,
