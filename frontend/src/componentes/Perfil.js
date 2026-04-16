@@ -1,3 +1,5 @@
+import { useKeycloak } from '@react-keycloak/web';
+
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
@@ -52,113 +54,79 @@ const TablaPermisos = styled.table`
 
 const Perfil = () => {
   const navigate = useNavigate();
+  const { keycloak, initialized } = useKeycloak(); //Hook de Keycloak
   const [empleado, setEmpleado] = useState(null);
   const [permisosDisponibles, setPermisosDisponibles] = useState([]);
   const [permisosAsignados, setPermisosAsignados] = useState([]);
 
   useEffect(() => {
-    const id = localStorage.getItem("idUsuario");
-    const tipo = localStorage.getItem("tipoUsuario");
-
-    if (!id || tipo !== "empleado") {
-      navigate("/");
+    //1.Verificación de Seguridad con Keycloak
+    if (initialized && !keycloak.authenticated) {
+      navigate("/"); //Si no está logueado, fuera de aquí
+      return;
     }
 
-    fetch(`http://148.206.162.62:4000/empleado/${id}`)
-      .then((response) => response.json())
-      .then((data) => setEmpleado(data))
-      .catch((error) => console.error("Error al obtener empleado:", error));
+    //2.Obtener datos del usuario desde el Token de Keycloak
+    //Usamos el 'sub' (ID único de Keycloak) o el 'preferred_username'
+    const idKeycloak = keycloak.tokenParsed?.sub; 
+    
+    //Si ya tenemos el ID de Keycloak, podemos buscar sus datos extra en nuestro backend
+    if (idKeycloak) {
+      fetch(`http://148.206.162.62:4000/empleado/${idKeycloak}`)
+        .then((response) => response.json())
+        .then((data) => setEmpleado(data))
+        .catch((error) => console.error("Error al obtener empleado:", error));
+    }
 
+    //Mantener la carga de permisos
     fetch("http://148.206.162.62:4000/permisos-empleado")
       .then((response) => response.json())
       .then((data) => setPermisosDisponibles(data))
-      .catch((error) =>
-        console.error("Error al obtener permisos disponibles:", error)
-      );
+      .catch((error) => console.error("Error:", error));
 
-    const permisosGuardados = localStorage.getItem("permisosUsuario");
-    if (permisosGuardados) {
-      try {
-        const ids = JSON.parse(permisosGuardados).map((id) => Number(id));
-        setPermisosAsignados(ids);
-      } catch (error) {
-        console.error("Error al parsear permisosUsuario:", error);
-      }
+    //Los permisos ahora los podemos sacar de los roles del Token
+    if (keycloak.realmAccess) {
+      //Supongamos que tus permisos coinciden con los roles de Keycloak
+      setPermisosAsignados(keycloak.realmAccess.roles || []);
     }
-  }, [navigate]);
+  }, [initialized, keycloak, navigate]);
+
+  //Si Keycloak aún no termina de cargar, mostramos un estado de espera
+  if (!initialized) return <p>Cargando seguridad...</p>;
 
   return (
     <>
       <Helmet>
-        <title>Perfil</title>
+        <title>Perfil - {keycloak.tokenParsed?.preferred_username}</title>
       </Helmet>
-
-      <Header>
-        <ContenedorHeader>
-          <Titulo>Perfil</Titulo>
-        </ContenedorHeader>
-      </Header>
-
-      <ImagenMotas src={imagen1} alt="MotasUam" />
-
       <FormularioRegistro>
         <FormularioRegistroSecciones>
-          <TitutuloSecciones>Datos del Empleado</TitutuloSecciones>
+          <TitutuloSecciones>Datos de la Cuenta (Keycloak)</TitutuloSecciones>
+          Usuario:
+          <Input2 value={keycloak.tokenParsed?.preferred_username || ""} disabled />
+          Correo:
+          <Input2 value={keycloak.tokenParsed?.email || ""} disabled />
+        </FormularioRegistroSecciones>
 
+        <FormularioRegistroSecciones>
+          <TitutuloSecciones>Datos del Empleado (Base de Datos)</TitutuloSecciones>
           {empleado ? (
             <>
               Nombre completo:
-              <Input2
-                value={`${empleado.nombre} ${empleado.apellidopaterno} ${empleado.apellidomaterno}`}
-                disabled
-              />
+              <Input2 value={`${empleado.nombre} ${empleado.apellidopaterno}`} disabled />
               No. Económico:
               <Input2 value={empleado.noeconomico} disabled />
-              Correo institucional:
-              <Input2 value={empleado.correoinstitucional} disabled />
-              Estado:
-              <Input2 value={empleado.estado_nombre} disabled />
-              Tipo:
-              <Input2 value={empleado.tipo_nombre} disabled />
             </>
           ) : (
-            <p>Cargando datos del empleado...</p>
+            <p>Sincronizando con base de datos...</p>
           )}
-        </FormularioRegistroSecciones>
-
-        <FormularioRegistroSecciones>
-          <TitutuloSecciones>Permisos asignados</TitutuloSecciones>
-
-          <TablaPermisos>
-            <thead>
-              <tr>
-                <th>Permiso</th>
-                <th>Asignado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {permisosDisponibles.map((permiso) => (
-                <tr key={permiso.id}>
-                  <td>{permiso.nombre}</td>
-                  <td>
-                    {permisosAsignados.includes(permiso.id) ? "Sí" : "No"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </TablaPermisos>
-        </FormularioRegistroSecciones>
-
+        </FormularioRegistroSecciones>        
         <ContenedorBoton>
-          <Boton
-            as="button"
-            primario
-            type="button"
-            onClick={() => navigate("/inicio-empleado")}
-          >
-            Regresar al Menú
-          </Boton>
+          <Boton primario onClick={() => keycloak.logout()}>Cerrar Sesión</Boton>
+          <Boton as="button" onClick={() => navigate("/inicio-empleado")}>Regresar</Boton>
         </ContenedorBoton>
+
+        
       </FormularioRegistro>
     </>
   );
