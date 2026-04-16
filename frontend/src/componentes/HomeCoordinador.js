@@ -88,7 +88,9 @@ const HomeCoordinador = () => {
 </BotonCerrar>
       <ContenedorBotonRegistro>
          <ContenedorImagen>
+          {tienePermiso(4) && (
           <ImagenLogo1 src={Prestamo} alt="LogoUam" />
+          )}
           {tienePermiso(4) && (
             <Boton as="button" primario onClick={() => navigate("/prestamos")}>
               Prestamos
@@ -96,7 +98,9 @@ const HomeCoordinador = () => {
           )}
         </ContenedorImagen>
         <ContenedorImagen>
+          {tienePermiso(0) && (
           <ImagenLogo1 src={Orden} alt="LogoUam" />
+          )}
           {tienePermiso(0) && (
             <Boton as="button" primario onClick={() => navigate("/materiales")}>
               Materiales Disponibles
@@ -110,7 +114,9 @@ const HomeCoordinador = () => {
           </Boton>
         </ContenedorImagen>
         <ContenedorImagen>
+          {tienePermiso(1) && (
           <ImagenLogo1 src={Usuario} alt="LogoUam" />
+          )}
           {tienePermiso(1) && (
             <Boton as="button" primario onClick={() => navigate("/usuarios")}>
               Usuarios
@@ -118,7 +124,9 @@ const HomeCoordinador = () => {
           )}
         </ContenedorImagen>
         <ContenedorImagen>
+          {tienePermiso(1) && (
           <ImagenLogo1 src={ActualizaCredenciales} alt="LogoUam" />
+          )}
           {tienePermiso(1) && (
             <Boton
               as="button"
@@ -130,7 +138,9 @@ const HomeCoordinador = () => {
           )}
         </ContenedorImagen>
         <ContenedorImagen>
+          {tienePermiso(3) && (
           <ImagenLogo1 src={Permiso} alt="LogoUam" />
+          )}
           {tienePermiso(3) && (
             <Boton as="button" primario onClick={() => navigate("/permisos")}>
               Permisos
