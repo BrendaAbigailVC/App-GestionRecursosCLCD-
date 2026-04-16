@@ -76,58 +76,50 @@ const HomeCoordinador = () => {
         </ContenedorHeader>
       </Header>
 
-    <BotonCerrar
-  as="button"
-  primario
-  onClick={() => {
-    localStorage.clear();
-    navigate("/");
-  }}
->
-  Cerrar sesión
-</BotonCerrar>
+      <BotonCerrar
+        as="button"
+        primario
+        onClick={() => {
+          localStorage.clear();
+          navigate("/");
+        }}
+      >
+        Cerrar sesión
+      </BotonCerrar>
       <ContenedorBotonRegistro>
-         <ContenedorImagen>
-          {tienePermiso(4) && (
-          <ImagenLogo1 src={Prestamo} alt="LogoUam" />
-          )}
-          {tienePermiso(4) && (
+        {tienePermiso(4) && (
+          <ContenedorImagen>
+            <ImagenLogo1 src={Prestamo} alt="LogoUam" />
             <Boton as="button" primario onClick={() => navigate("/prestamos")}>
               Prestamos
             </Boton>
-          )}
-        </ContenedorImagen>
-        <ContenedorImagen>
-          {tienePermiso(0) && (
-          <ImagenLogo1 src={Orden} alt="LogoUam" />
-          )}
-          {tienePermiso(0) && (
+          </ContenedorImagen>
+        )}
+        {tienePermiso(0) && (
+          <ContenedorImagen>
+            <ImagenLogo1 src={Orden} alt="LogoUam" />
             <Boton as="button" primario onClick={() => navigate("/materiales")}>
               Materiales Disponibles
             </Boton>
-          )}
-        </ContenedorImagen>
+          </ContenedorImagen>
+        )}
         <ContenedorImagen>
           <ImagenLogo1 src={Historico} alt="LogoUam" />
           <Boton as="button" primario onClick={() => navigate("/historico")}>
             Historico
           </Boton>
         </ContenedorImagen>
-        <ContenedorImagen>
-          {tienePermiso(1) && (
-          <ImagenLogo1 src={Usuario} alt="LogoUam" />
-          )}
-          {tienePermiso(1) && (
+        {tienePermiso(1) && (
+          <ContenedorImagen>
+            <ImagenLogo1 src={Usuario} alt="LogoUam" />
             <Boton as="button" primario onClick={() => navigate("/usuarios")}>
               Usuarios
             </Boton>
-          )}
-        </ContenedorImagen>
-        <ContenedorImagen>
-          {tienePermiso(1) && (
-          <ImagenLogo1 src={ActualizaCredenciales} alt="LogoUam" />
-          )}
-          {tienePermiso(1) && (
+          </ContenedorImagen>
+        )}
+        {tienePermiso(1) && (
+          <ContenedorImagen>
+            <ImagenLogo1 src={ActualizaCredenciales} alt="LogoUam" />
             <Boton
               as="button"
               primario
@@ -135,18 +127,16 @@ const HomeCoordinador = () => {
             >
               Actualizar Contraseña Usuario
             </Boton>
-          )}
-        </ContenedorImagen>
-        <ContenedorImagen>
-          {tienePermiso(3) && (
-          <ImagenLogo1 src={Permiso} alt="LogoUam" />
-          )}
-          {tienePermiso(3) && (
+          </ContenedorImagen>
+        )}
+        {tienePermiso(3) && (
+          <ContenedorImagen>
+            <ImagenLogo1 src={Permiso} alt="LogoUam" />
             <Boton as="button" primario onClick={() => navigate("/permisos")}>
               Permisos
             </Boton>
-          )}
-        </ContenedorImagen>
+          </ContenedorImagen>
+        )}
         <ContenedorImagen>
           <ImagenLogo1 src={Perfil} alt="LogoUam" />
           <Boton as="button" primario onClick={() => navigate("/perfil")}>
