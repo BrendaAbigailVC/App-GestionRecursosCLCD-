@@ -1,4 +1,71 @@
-#root {
-    width: 40%;
+/*Contenedor general de la página de inicio de sesión */
+.login-page {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+/*Tarjeta central*/
+.login-card {
+  background-color: #ffffff;
+  padding: 2.5rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+.login-title {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 1.8rem;
+}
+
+.login-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.login-button {
+  padding: 0.9rem 1.8rem;
+  font-size: 1rem;
+  background-color: #333;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.login-button:hover {
+  background-color: #000;
+  transform: translateY(-1px);
+}
+
+.login-button-secondary {
+  background-color: #555;
+}
+
+.login-button-secondary:hover {
+  background-color: #444;
+}
+
+@media (max-width: 600px) {
+  .login-card {
+    padding: 2rem 1.5rem;
   }
-  
+
+  .login-actions {
+    flex-direction: column;
+  }
+}
