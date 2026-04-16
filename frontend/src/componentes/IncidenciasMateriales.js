@@ -17,26 +17,16 @@ const CardStat = styled.div`
   padding: 20px 35px;
   border-radius: 15px;
   min-width: 220px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   text-align: center;
+  cursor: pointer;
+
+  border: ${(props) => props.activo ? "2px solid #4a89dc" : "2px solid transparent"};
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   transition: 0.2s ease;
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
-  }
-
-  h2 {
-    margin: 0;
-    font-size: 32px;
-    font-weight: 700;
-  }
-
-  p {
-    margin: 5px 0 0;
-    font-size: 14px;
-    color: #777;
-    font-weight: 500;
   }
 `;
 
@@ -224,11 +214,7 @@ const CeldaEstado = styled.td`
   color: ${(props) => props.color};
 `;
 
-const ContenedorFiltros = styled.div`
-  display: flex;
-  gap: 10px;
-  margin: 20px 10px;
-`;
+
 
 const BotonFiltro = styled.button`
   padding: 10px 18px;
@@ -236,6 +222,7 @@ const BotonFiltro = styled.button`
   border: none;
   cursor: pointer;
   font-weight: 600;
+  margin-left: 30px;
 
   background: ${(props) => (props.activo ? "#4a89dc" : "#e0e0e0")};
   color: ${(props) => (props.activo ? "white" : "#333")};
@@ -395,33 +382,23 @@ const IncidenciasMateriales = () => {
 
 
       <ContenedorStats>
-        <CardStat>
+        <CardStat
+          activo={filtroEstado === "incidencias"}
+          onClick={() => setFiltroEstado("incidencias")}
+        >
           <h2 style={{ color: "#f6c23e" }}>{pendientes}</h2>
           <p>Incidencias Pendientes</p>
         </CardStat>
 
-        <CardStat>
+        <CardStat
+          activo={filtroEstado === "reparacion"}
+          onClick={() => setFiltroEstado("reparacion")}
+        >
           <h2 style={{ color: "#4a89dc" }}>{enReparacion}</h2>
           <p>En Reparación</p>
         </CardStat>
       </ContenedorStats>
-      <ContenedorFiltros>
 
-        <BotonFiltro
-          activo={filtroEstado === "incidencias"}
-          onClick={() => setFiltroEstado("incidencias")}
-        >
-          Incidencias
-        </BotonFiltro>
-
-        <BotonFiltro
-          activo={filtroEstado === "reparacion"}
-          onClick={() => setFiltroEstado("reparacion")}
-        >
-          En reparación
-        </BotonFiltro>
-
-      </ContenedorFiltros>
       <Tabla>
         <EncabezadoTabla>
           <FilaTabla>
