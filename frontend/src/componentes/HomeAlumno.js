@@ -1,3 +1,5 @@
+import { useKeycloak } from "@react-keycloak/web";
+
 import { useEffect } from "react";
 import { Header, Titulo, ContenedorHeader } from "../elementos/Header";
 import Boton from "../elementos/Boton";
@@ -34,16 +36,27 @@ const ContenedorBotonRegistro = styled.div`
 `;
 
 const HomeAlumno = () => {
+
+  const { keycloak, initialized } = useKeycloak();
+  
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const id = localStorage.getItem("idUsuario");
-    const tipo = localStorage.getItem("tipoUsuario");
+  //useEffect(() => {
+    //const id = localStorage.getItem("idUsuario");
+    //const tipo = localStorage.getItem("tipoUsuario");
 
-    if (!id || tipo !== "alumno") {
-      navigate("/");
+    //if (!id || tipo !== "alumno") {
+      //navigate("/");
+    //}
+  //}, [navigate]);
+
+  useEffect(() => {
+    if (!initialized) return;
+
+    if (!keycloak.authenticated || !keycloak.hasRealmRole("alumnos")) {
+      navigate("/", { replace: true });
     }
-  }, [navigate]);
+  }, [initialized, keycloak, navigate]);
 
   return (
     <>
@@ -60,10 +73,15 @@ const HomeAlumno = () => {
       <Boton
         as="button"
         primario
-        onClick={() => {
-          localStorage.clear();
-          navigate("/");
-        }}
+        //onClick={() => {
+          //localStorage.clear();
+          //navigate("/");
+        //}}
+        onClick={() =>
+          keycloak.logout({
+            redirectUri: window.location.origin + "/login",
+          })
+        }
       >
         Cerrar sesión
       </Boton>
