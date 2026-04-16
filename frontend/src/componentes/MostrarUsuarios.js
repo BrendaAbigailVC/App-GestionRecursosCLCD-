@@ -15,7 +15,7 @@ const MostrarUsuarios = () => {
   const { keycloak, initialized } = useKeycloak();
   const navigate = useNavigate();
 
-  //validacion de seguridad: solo coordinadores pueden acceder a esta vista
+  //validacion de seguridad 
   useEffect(() => {
     if (initialized){
       //si el alumno no es coordinador ni tecnico, lo redirige al inicio
@@ -43,6 +43,7 @@ const MostrarUsuarios = () => {
 
       <BotonAtras ruta="/usuarios" />
 
+      {/*ESTO HAY QUE BORRARLO */}
       <p style = {{textAlign: 'center', color: 'green'}}>
         Identidad verificada: {keycloak.tokenParsed?.preferred_username}
       </p>
