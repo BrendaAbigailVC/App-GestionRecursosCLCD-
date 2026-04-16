@@ -1,3 +1,5 @@
+import { useKeycloak } from "@react-keycloak/web";
+
 import { Header, Titulo, ContenedorHeader } from "../elementos/Header";
 import Boton from "../elementos/Boton";
 import { Helmet } from "react-helmet";
@@ -14,7 +16,11 @@ import ActualizaCredenciales from "../imagenes/ActualizaciónCredencial2.png";
 import Permiso from "../imagenes/permiso.png";
 import Prestamo from "../imagenes/Prestamo.png";
 import BotonAtras from "../elementos/BotonAtras";
-import { ContenedorImagen, ImagenLogo1, ContenedorBotonRegistro } from "../elementos/ContenedoresBotones";
+import {
+  ContenedorImagen,
+  ImagenLogo1,
+  ContenedorBotonRegistro,
+} from "../elementos/ContenedoresBotones";
 /*const ImagenLogo1 = styled.img`
   margin-right: 2%;
   width: 35%;
@@ -41,20 +47,46 @@ const ContenedorBotonRegistro = styled.div`
 `;*/
 
 const HomeCoordinador = () => {
+  // 1. Corregido a "initialized" con 't'
+  const { keycloak, initialized } = useKeycloak();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const id = localStorage.getItem("idUsuario");
-    const tipo = localStorage.getItem("tipoUsuario");
+    // 2. Ejecutar SOLO cuando ya está inicializado
+    if (initialized) {
+      const roles = keycloak.realmAccess?.roles ?? [];
+      const esAdmin = roles.includes("coordinadores") || roles.includes("técnicos");
 
-    if (!id || tipo !== "empleado") {
-      navigate("/");
+      if (!keycloak.authenticated) {
+        navigate("/");
+      } else if (!esAdmin) {
+        navigate("/inicio-alumno");
+      }
     }
-  }, [navigate]);
+  }, [initialized, keycloak, navigate]);
 
-  const permisos = JSON.parse(localStorage.getItem("permisosUsuario") || "[]");
+  // 3. Pantalla de carga mientras inicializa
+  if (!initialized) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center" }}>
+        <h2>Verificando credenciales...</h2>
+      </div>
+    );
+  }
 
-  const tienePermiso = (idPermiso) => permisos.includes(idPermiso);
+  //Mapeo de permisos antiguos a roles de Keycloak
+  //Como los botones usan números (0, 1, 3, 4), se traducen aquí:
+  const tienePermiso = (id) => {
+    if (id === 0)
+      return (
+        keycloak.hasRealmRole("técnicos") ||
+        keycloak.hasRealmRole("coordinadores")
+      );
+    if (id === 1) return keycloak.hasRealmRole("coordinadores") || keycloak.hasRealmRole("técnicos"); // Usuarios y Password
+    if (id === 3) return keycloak.hasRealmRole("coordinadores") || keycloak.hasRealmRole("técnicos"); // Permisos
+    if (id === 4) return true; // Préstamos (asumimos que todos los empleados pueden)
+    return false;
+  };
 
   return (
     <>
@@ -68,18 +100,28 @@ const HomeCoordinador = () => {
         </ContenedorHeader>
       </Header>
 
+      <p style={{ textAlign: "center", color: "green" }}>
+        ¡Acceso verificado como: {keycloak.tokenParsed?.preferred_username}!
+      </p>
+
       <Boton
         as="button"
         primario
-        onClick={() => {
-          localStorage.clear();
-          navigate("/");
-        }}
+        onClick={() => keycloak.logout()} //cambiado a logout real
       >
         Cerrar sesión
       </Boton>
+
       <ContenedorBotonRegistro>
          <ContenedorImagen>
+          <ImagenLogo1 src={Prestamo} alt="LogoUam" />
+          {tienePermiso(4) && (
+            <Boton as="button" primario onClick={() => navigate("/prestamos")}>
+              Prestamos
+            </Boton>
+          )}
+        </ContenedorImagen>
+        <ContenedorImagen>
           <ImagenLogo1 src={Prestamo} alt="LogoUam" />
           {tienePermiso(4) && (
             <Boton as="button" primario onClick={() => navigate("/prestamos")}>
