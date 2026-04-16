@@ -35,16 +35,19 @@ const ContenedorHeader = styled.div`
     width: 100%;
     display: flex;
     justify-content: space-between;
- 
+    align-items: center;
+    position: relative;
+
     @media(max-width: 60rem){ /* 950px */
         display: flex;
         flex-direction: column-reverse;
         align-items: center;
- 
+       gap: 10px;
         & > div {
+            width: 100%;
             display: flex;
             margin-bottom: 1.25rem; /* 20px */
-            justify-content: end;
+            justify-content: flex-end; ;
         }
     }
 `;

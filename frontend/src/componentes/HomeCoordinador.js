@@ -40,6 +40,14 @@ const ContenedorBotonRegistro = styled.div`
   gap: 100px;
 `;*/
 
+const BotonCerrar = styled(Boton)`
+  @media (min-width: 60rem) {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+  }
+`;
+
 const HomeCoordinador = () => {
   const navigate = useNavigate();
 
@@ -68,16 +76,16 @@ const HomeCoordinador = () => {
         </ContenedorHeader>
       </Header>
 
-      <Boton
-        as="button"
-        primario
-        onClick={() => {
-          localStorage.clear();
-          navigate("/");
-        }}
-      >
-        Cerrar sesión
-      </Boton>
+    <BotonCerrar
+  as="button"
+  primario
+  onClick={() => {
+    localStorage.clear();
+    navigate("/");
+  }}
+>
+  Cerrar sesión
+</BotonCerrar>
       <ContenedorBotonRegistro>
          <ContenedorImagen>
           <ImagenLogo1 src={Prestamo} alt="LogoUam" />
