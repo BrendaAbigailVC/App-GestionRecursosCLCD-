@@ -105,8 +105,8 @@ const getPrestamo = async (req, res, next) => {
         END AS solicitante_codigo,
         CASE 
           WHEN p.solicitante_tipo = 'ALUMNO' 
-            THEN CONCAT(a.nombre, ' ', a.apellidopaterno)
-          ELSE CONCAT(e2.nombre, ' ', e2.apellidopaterno)
+            THEN CONCAT(a.nombre, ' ', a.apellidopaterno, ' ', a.apellidomaterno)
+          ELSE CONCAT(e2.nombre, ' ', e2.apellidopaterno, ' ', e2.apellidomaterno)
         END AS solicitante_nombre,
         p.idempleado,
         e.noeconomico AS no_economico,

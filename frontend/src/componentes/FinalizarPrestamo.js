@@ -204,12 +204,12 @@ const FinalizarPrestamo = () => {
               value={`${prestamo.solicitante_tipo === "ALUMNO"
                   ? "Matrícula"
                   : "No. Económico"
-                }: ${prestamo.alumno_matricula}`}
+                }: ${prestamo.solicitante_codigo}`}
               disabled
             />
 
             <Input2
-              value={`Nombre: ${prestamo.alumno_nombre}`}
+              value={`Nombre: ${prestamo.solicitante_nombre}`}
               disabled
             />
             <Input2

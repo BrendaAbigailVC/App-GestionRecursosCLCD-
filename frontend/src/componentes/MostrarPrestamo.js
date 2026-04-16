@@ -71,12 +71,12 @@ const MostrarPrestamo = () => {
   return (
     <>
       <Helmet>
-        <title>Finalizar Préstamo</title>
+        <title>Histórico Préstamo</title>
       </Helmet>
 
       <Header>
         <ContenedorHeader>
-          <Titulo>Finalizar Préstamo</Titulo>
+          <Titulo>Histórico Préstamo</Titulo>
         </ContenedorHeader>
       </Header>
 
@@ -87,7 +87,18 @@ const MostrarPrestamo = () => {
           <FormularioRegistroSecciones>
             <TitutuloSecciones>Datos del Préstamo</TitutuloSecciones>
             <Input2 value={`ID: ${prestamo.id}`} disabled />
-            <Input2 value={`Matrícula: ${prestamo.matriculaAlumno}`} disabled />
+            <Input2
+              value={`${prestamo.solicitante_tipo === "ALUMNO"
+                  ? "Matrícula"
+                  : "No. Económico"
+                }: ${prestamo.solicitante_codigo}`}
+              disabled
+            />
+
+            <Input2
+              value={`Solicitante: ${prestamo.solicitante_nombre}`}
+              disabled
+            />
             <Input2 value={`Empleado: ${prestamo.numeroEconomico}`} disabled />
             <Input2
               value={`Fecha préstamo: ${new Date(
