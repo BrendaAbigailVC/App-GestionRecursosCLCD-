@@ -70,9 +70,11 @@ services:
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_pass}
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
-    command: ["start-dev"]
+    command: ["start-dev", "--import-realm"]
     ports:
       - "${KEYCLOAK_PORT:-8081}:8080"
+    volumes:
+      - ./keycloak/realm:/opt/keycloak/data/import
 
 volumes:
   postgres_data:
