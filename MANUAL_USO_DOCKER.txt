@@ -1,0 +1,445 @@
+MANUAL DE USO DEL PROYECTO CON DOCKER
+
+Proyecto:
+App-GestionRecursosCLCD-
+
+Objetivo de este manual:
+Explicar de forma clara como levantar, detener, reiniciar y diagnosticar el proyecto usando Docker, principalmente en ambiente local.
+
+==================================================
+1. QUE NECESITAS ANTES DE EMPEZAR
+==================================================
+
+Debes tener instalado en tu equipo:
+- Docker
+- Docker Compose plugin
+
+Puedes verificarlo con:
+- `docker --version`
+- `docker compose version`
+
+Tambien necesitas estar ubicado dentro de la carpeta raiz del proyecto:
+- `App-GestionRecursosCLCD-`
+
+==================================================
+2. ESTRUCTURA DOCKER DEL PROYECTO
+==================================================
+
+El proyecto se levanta actualmente con cinco servicios:
+
+1. `db`
+- Usa PostgreSQL
+- Guarda la informacion en un volumen persistente
+- Ejecuta automaticamente archivos SQL al inicializarse por primera vez
+
+2. `backend`
+- Ejecuta la API en Node.js
+- Se conecta al contenedor de PostgreSQL
+
+3. `frontend`
+- Compila React
+- Sirve la aplicacion con Nginx
+- Redirige `/api` al backend
+
+4. `keycloak-db`
+- Usa PostgreSQL
+- Guarda unicamente la informacion interna de Keycloak
+- Esta separado de la base de datos principal de la app
+
+5. `keycloak`
+- Usa la imagen oficial de Keycloak 26.5.3
+- Arranca de forma independiente
+- No esta integrado todavia con el login actual de la aplicacion
+- Queda disponible para que otra persona lo configure despues
+
+Archivos importantes:
+- `docker-compose.yml`
+- `backend/Dockerfile`
+- `frontend/Dockerfile`
+- `frontend/nginx.conf`
+- `.env.example`
+- `docker/postgres/init/001-BD_PRUEBA.sql`
+- `MANUAL_DESPLIEGUE_SERVIDOR_DOCKER.txt`
+
+==================================================
+3. ARCHIVOS QUE DEBEN EXISTIR
+==================================================
+
+Antes de levantar el proyecto, revisa que existan estos archivos:
+
+1. Archivo de variables:
+- `.env`
+
+Si no existe, crealo a partir de:
+- `.env.example`
+
+2. Archivo SQL de inicializacion:
+- `docker/postgres/init/001-BD_PRUEBA.sql`
+
+Este archivo se usa para cargar la base de datos cuando el contenedor de PostgreSQL se crea por primera vez.
+
+==================================================
+4. CONFIGURACION DEL ARCHIVO .env
+==================================================
+
+Contenido base recomendado:
+
+POSTGRES_DB=gestionrecursos
+POSTGRES_USER=gestion_user
+POSTGRES_PASSWORD=gestion_pass
+POSTGRES_PORT=5432
+
+BACKEND_PORT=4000
+FRONTEND_PORT=3000
+
+KEYCLOAK_DB_NAME=keycloak
+KEYCLOAK_DB_USER=keycloak
+KEYCLOAK_DB_PASSWORD=keycloak_pass
+KEYCLOAK_ADMIN_USER=admin
+KEYCLOAK_ADMIN_PASSWORD=admin_pass
+KEYCLOAK_PORT=8081
+
+Nota importante:
+- Si ya tienes PostgreSQL corriendo en tu maquina en el puerto 5432, puede haber conflicto.
+- En ese caso puedes cambiar:
+  `POSTGRES_PORT=5436`
+
+Nota adicional:
+- `keycloak` no afecta el funcionamiento actual de la app.
+- Mientras no se integre con frontend o backend, solo levanta como servicio independiente.
+
+==================================================
+5. PRIMER LEVANTAMIENTO DEL PROYECTO
+==================================================
+
+Si es la primera vez que lo vas a correr en local, sigue estos pasos:
+
+1. Abre una terminal en la raiz del proyecto.
+
+2. Asegurate de tener listo:
+- `.env`
+- `docker/postgres/init/001-BD_PRUEBA.sql`
+
+3. Ejecuta:
+- `docker compose up --build`
+
+Que hace este comando:
+- Construye las imagenes del frontend y backend
+- Descarga la imagen de PostgreSQL si no existe
+- Descarga la imagen de Keycloak si no existe
+- Levanta todos los contenedores definidos
+- Inicializa la base de datos si el volumen aun no existia
+
+==================================================
+6. COMO SABER SI TODO ARRANCO BIEN
+==================================================
+
+Cuando los contenedores arranquen correctamente deberias poder abrir:
+
+- Frontend:
+  `http://localhost:3000`
+
+- Backend:
+  `http://localhost:4000`
+
+- Keycloak:
+  `http://localhost:8081`
+
+La base de datos normalmente no se prueba desde navegador, pero puedes confirmar que el contenedor esta arriba con:
+- `docker compose ps`
+
+==================================================
+7. COMANDOS MAS USADOS
+==================================================
+
+Levantar el proyecto:
+- `docker compose up --build`
+
+Levantarlo en segundo plano:
+- `docker compose up -d --build`
+
+Ver contenedores activos:
+- `docker compose ps`
+
+Ver logs de todos los servicios:
+- `docker compose logs`
+
+Ver logs solo del backend:
+- `docker compose logs backend`
+
+Ver logs solo del frontend:
+- `docker compose logs frontend`
+
+Ver logs solo de la base:
+- `docker compose logs db`
+
+Ver logs de Keycloak:
+- `docker compose logs keycloak`
+
+Ver logs de la base de Keycloak:
+- `docker compose logs keycloak-db`
+
+Detener los contenedores:
+- `docker compose stop`
+
+Detener y eliminar contenedores:
+- `docker compose down`
+
+Detener y eliminar contenedores mas volumen de la base:
+- `docker compose down -v`
+
+Reconstruir y volver a levantar:
+- `docker compose up --build`
+
+==================================================
+8. CUANDO USAR docker compose down -v
+==================================================
+
+Usa este comando solo cuando quieras reiniciar completamente la base local:
+- `docker compose down -v`
+
+Esto elimina:
+- los contenedores
+- la red
+- el volumen persistente de PostgreSQL
+- el volumen persistente de Keycloak si existe
+
+Consecuencia:
+- se borra la base local guardada en Docker
+- al levantar de nuevo, PostgreSQL volvera a ejecutar el SQL de `docker/postgres/init/`
+
+Debes usarlo cuando:
+- cambiaste el archivo SQL y quieres que se vuelva a importar
+- la base local quedo en mal estado
+- estas haciendo pruebas desde cero
+
+No lo uses si quieres conservar los datos locales.
+
+==================================================
+9. COMO FUNCIONA LA CARGA DE LA BASE DE DATOS
+==================================================
+
+El contenedor `db` usa esta carpeta:
+- `docker/postgres/init/`
+
+Todo archivo `.sql` o `.sql.gz` que este ahi se ejecuta automaticamente la primera vez que PostgreSQL crea su volumen.
+
+En este proyecto el archivo principal es:
+- `docker/postgres/init/001-BD_PRUEBA.sql`
+
+Importante:
+- Si el volumen ya existia, PostgreSQL no vuelve a ejecutar ese archivo automaticamente.
+
+==================================================
+10. COMO ENTRAR A UN CONTENEDOR
+==================================================
+
+Para abrir una terminal dentro del backend:
+- `docker compose exec backend sh`
+
+Para abrir una terminal dentro del frontend:
+- `docker compose exec frontend sh`
+
+Para abrir una terminal dentro de PostgreSQL:
+- `docker compose exec db sh`
+
+Para abrir una terminal dentro de Keycloak:
+- `docker compose exec keycloak sh`
+
+Para abrir una terminal dentro de la base de Keycloak:
+- `docker compose exec keycloak-db sh`
+
+==================================================
+11. COMO PROBAR LA BASE DESDE EL CONTENEDOR
+==================================================
+
+Si quieres entrar a PostgreSQL dentro del contenedor:
+
+1. Abre shell:
+- `docker compose exec db sh`
+
+2. Entra a psql:
+- `psql -U gestion_user -d gestionrecursos`
+
+Si usaste otros valores en `.env`, sustituye:
+- usuario
+- base
+
+Algunas consultas utiles:
+- `\\dt`
+  muestra las tablas
+
+- `SELECT * FROM alumno LIMIT 5;`
+
+- `SELECT * FROM empleado LIMIT 5;`
+
+Salir de psql:
+- `\\q`
+
+==================================================
+12. FLUJO RECOMENDADO DE TRABAJO LOCAL
+==================================================
+
+Flujo recomendado:
+
+1. Levantar servicios:
+- `docker compose up -d --build`
+
+2. Revisar estado:
+- `docker compose ps`
+
+3. Revisar logs si algo falla:
+- `docker compose logs backend`
+- `docker compose logs frontend`
+- `docker compose logs db`
+- `docker compose logs keycloak`
+
+4. Hacer pruebas en navegador:
+- login
+- materiales
+- usuarios
+- prestamos
+
+5. Cuando termines:
+- `docker compose down`
+
+==================================================
+13. PROBLEMAS COMUNES Y SOLUCIONES
+==================================================
+
+Problema 1:
+El frontend no abre.
+
+Posibles causas:
+- el contenedor `frontend` no levanto
+- el puerto 3000 esta ocupado
+
+Solucion:
+- `docker compose ps`
+- `docker compose logs frontend`
+- cambiar `FRONTEND_PORT` en `.env`
+
+--------------------------------------------------
+
+Problema 2:
+El backend no responde.
+
+Posibles causas:
+- el backend no pudo arrancar
+- no pudo conectarse a la base
+
+Solucion:
+- `docker compose logs backend`
+- verificar `.env`
+- verificar que `db` este arriba
+
+--------------------------------------------------
+
+Problema 3:
+La base no cargo las tablas.
+
+Posibles causas:
+- el SQL no estaba en `docker/postgres/init/`
+- el volumen ya existia y PostgreSQL no reimporto
+
+Solucion:
+1. confirmar que el archivo correcto exista:
+   `docker/postgres/init/001-BD_PRUEBA.sql`
+2. ejecutar:
+   `docker compose down -v`
+3. volver a levantar:
+   `docker compose up --build`
+
+--------------------------------------------------
+
+Problema 4:
+El puerto 5432 ya esta en uso.
+
+Solucion:
+- cambia en `.env`:
+  `POSTGRES_PORT=5433`
+  o cualquier otro puerto libre
+
+--------------------------------------------------
+
+Problema 5:
+El frontend carga pero la API falla.
+
+Posibles causas:
+- backend caido
+- error de proxy
+- error de conexion a PostgreSQL
+
+Solucion:
+- revisar logs:
+  `docker compose logs backend`
+  `docker compose logs frontend`
+- confirmar que Nginx este sirviendo `/api`
+- confirmar que el backend siga escuchando en puerto 4000 dentro del contenedor
+
+==================================================
+14. PUERTOS DEL PROYECTO
+==================================================
+
+Puertos esperados:
+
+- Frontend:
+  `3000`
+
+- Backend:
+  `4000`
+
+- PostgreSQL:
+  `5432`
+  o el que configures en `.env`
+
+- Keycloak:
+  `8081`
+
+- PostgreSQL de Keycloak:
+  no se expone externamente por defecto
+
+Recuerda:
+- dentro de Docker, PostgreSQL escucha en `5432`
+- el puerto externo puede cambiar segun tu `.env`
+
+==================================================
+15. RECOMENDACIONES IMPORTANTES
+==================================================
+
+1. No edites el SQL dentro del contenedor.
+   Siempre modifica el archivo fuente en el proyecto.
+
+2. Si cambias la estructura de la base y quieres reimportar:
+   usa `docker compose down -v`
+
+3. Si cambias codigo del backend o frontend:
+   vuelve a construir con:
+   `docker compose up --build`
+
+4. Si quieres guardar datos locales de prueba:
+   no uses `down -v`
+
+5. Si algo falla, primero revisa logs antes de cambiar mas cosas.
+
+6. Si Keycloak no es necesario para una prueba puntual de la app, puedes seguir trabajando aunque Keycloak no este configurado internamente, siempre que no afecte el arranque general.
+
+==================================================
+16. RESUMEN RAPIDO
+==================================================
+
+Pasos minimos para usar Docker en este proyecto:
+
+1. Crear `.env`
+2. Confirmar que existe:
+   `docker/postgres/init/001-BD_PRUEBA.sql`
+3. Ejecutar:
+   `docker compose down -v`
+4. Ejecutar:
+   `docker compose up --build`
+5. Abrir:
+   `http://localhost:3000`
+6. Si quieres revisar Keycloak:
+   `http://localhost:8081`
+
+Fin del manual.

@@ -1,0 +1,444 @@
+BITACORA DE CAMBIOS REALIZADOS DESDE EL INICIO HASTA AHORA
+
+Proyecto:
+App-GestionRecursosCLCD-
+
+Objetivo general del trabajo realizado:
+Preparar la aplicacion para poder ejecutarse primero en ambiente local con Docker y, una vez validada, dejar la base lista para moverla despues al servidor.
+
+==================================================
+1. REVISION INICIAL DEL PROYECTO
+==================================================
+
+Al inicio se hizo una lectura general del repositorio para entender su estructura y funcionamiento.
+
+Se identifico lo siguiente:
+- El proyecto es un monorepo sencillo.
+- El backend esta en Node.js con Express y PostgreSQL.
+- El frontend esta en React con react-router-dom y styled-components.
+- El backend arranca desde `backend/index.js`.
+- La conexion a base de datos depende de variables de entorno leidas en `backend/config.js`.
+- El frontend consume la API con muchos `fetch(...)` directos desde componentes.
+- La URL del backend estaba escrita de forma fija con la IP:
+  `http://148.206.162.62:4000`
+- El flujo mas delicado del sistema es el de prestamos, porque afecta stock de materiales y usa transacciones.
+
+Tambien se detectaron riesgos importantes:
+- Las contrasenas se comparan en texto plano en login.
+- No hay autenticacion robusta del lado servidor.
+- Gran parte del control de acceso depende de `localStorage`.
+- La URL del backend estaba acoplada a una sola IP, lo que complicaba el paso a Docker.
+
+==================================================
+2. OBJETIVO DE LA DOCKERIZACION
+==================================================
+
+Se definio una estrategia por etapas:
+
+Etapa 1:
+Levantar todo en local con Docker.
+
+Etapa 2:
+Validar que frontend, backend y base de datos funcionen correctamente en local.
+
+Etapa 3:
+Con el ambiente local estable, preparar el despliegue en servidor.
+
+==================================================
+3. CAMBIOS HECHOS EN EL BACKEND
+==================================================
+
+Archivo modificado:
+- `backend/index.js`
+
+Cambio realizado:
+- Antes el backend escuchaba siempre en el puerto fijo 4000.
+- Se modifico para que lea el puerto desde variable de entorno:
+  `const PORT = process.env.PORT || 4000;`
+
+Beneficio:
+- Esto permite que el backend funcione correctamente dentro de Docker y tambien en otros ambientes sin tener que editar el codigo.
+
+Estado final:
+- El servidor ahora arranca con `app.listen(PORT)`.
+- El mensaje de consola se actualizo a:
+  `Server on port ${PORT}`
+
+==================================================
+4. CAMBIOS HECHOS EN EL FRONTEND
+==================================================
+
+Archivo modificado:
+- `frontend/package.json`
+
+Cambio realizado:
+- Se agrego la propiedad:
+  `"proxy": "http://localhost:4000"`
+
+Beneficio:
+- Permite que durante desarrollo local con React se usen rutas relativas hacia la API y CRA reenvie las peticiones al backend.
+
+--------------------------------------------------
+4.1 Cambio mas grande en el frontend: API relativa
+--------------------------------------------------
+
+Antes:
+- Los componentes hacian peticiones a la IP fija:
+  `http://148.206.162.62:4000/...`
+
+Ahora:
+- Esas rutas se cambiaron a rutas relativas con prefijo `/api/...`
+
+Ejemplos:
+- Antes:
+  `fetch("http://148.206.162.62:4000/login")`
+- Ahora:
+  `fetch("/api/login")`
+
+Esto se hizo en multiples componentes del frontend para desacoplar la app de una IP fija y permitir que funcione tanto:
+- en desarrollo local
+- como detras de Nginx dentro de Docker
+
+Archivos del frontend modificados para este ajuste:
+- `frontend/src/componentes/EditarAlumno.js`
+- `frontend/src/componentes/EditarEmpleado.js`
+- `frontend/src/componentes/EditarMaterial.js`
+- `frontend/src/componentes/EditarPass.js`
+- `frontend/src/componentes/EditarPermiso.js`
+- `frontend/src/componentes/EliminarAlumno.js`
+- `frontend/src/componentes/EliminarEmpleado.js`
+- `frontend/src/componentes/EliminarMaterial.js`
+- `frontend/src/componentes/FinalizarPrestamo.js`
+- `frontend/src/componentes/Historico.js`
+- `frontend/src/componentes/HistoricoAlumno.js`
+- `frontend/src/componentes/InicioSesion.js`
+- `frontend/src/componentes/MostrarAlumnos.js`
+- `frontend/src/componentes/MostrarAlumnosPass.js`
+- `frontend/src/componentes/MostrarEmpleado.js`
+- `frontend/src/componentes/MostrarMaterialA.js`
+- `frontend/src/componentes/MostrarMateriales.js`
+- `frontend/src/componentes/MostrarMaterialesA.js`
+- `frontend/src/componentes/MostrarPrestamo.js`
+- `frontend/src/componentes/MostrarPrestamoAlumno.js`
+- `frontend/src/componentes/MostrarPrestamosActivos.js`
+- `frontend/src/componentes/Perfil.js`
+- `frontend/src/componentes/PerfilAlumno.js`
+- `frontend/src/componentes/Permisos.js`
+- `frontend/src/componentes/RegistrarAlumno.js`
+- `frontend/src/componentes/RegistrarEmpleado.js`
+- `frontend/src/componentes/RegistrarMaterial.js`
+- `frontend/src/componentes/RegistrarPrestamo.js`
+
+Beneficio principal:
+- El frontend ya no depende de la IP del servidor actual.
+- Queda listo para funcionar detras de un proxy reverso.
+- Facilita la migracion a contenedores y despues al servidor real.
+
+==================================================
+5. ARCHIVOS NUEVOS PARA DOCKERIZACION
+==================================================
+
+Se agregaron varios archivos nuevos para contenerizar la aplicacion.
+
+--------------------------------------------------
+5.1 Dockerfile del backend
+--------------------------------------------------
+
+Archivo nuevo:
+- `backend/Dockerfile`
+
+Funcion:
+- Construir una imagen de Node para ejecutar el backend.
+
+Comportamiento:
+- Usa `node:20-alpine`
+- Crea `/app` como directorio de trabajo
+- Copia `package.json` y `package-lock.json`
+- Instala dependencias con `npm ci --omit=dev`
+- Copia la carpeta `backend`
+- Expone el puerto `4000`
+- Ejecuta `node backend/index.js`
+
+Beneficio:
+- El backend ya puede ser levantado como contenedor independiente.
+
+--------------------------------------------------
+5.2 Dockerfile del frontend
+--------------------------------------------------
+
+Archivo nuevo:
+- `frontend/Dockerfile`
+
+Funcion:
+- Construir el frontend en una etapa de build y servir el resultado con Nginx.
+
+Comportamiento:
+- Primera etapa:
+  - Usa `node:20-alpine`
+  - Instala dependencias del frontend
+  - Ejecuta `npm run build`
+- Segunda etapa:
+  - Usa `nginx:1.27-alpine`
+  - Copia la configuracion de Nginx
+  - Copia el build generado a `/usr/share/nginx/html`
+  - Expone el puerto `80`
+
+Beneficio:
+- El frontend deja de depender del servidor de desarrollo de React en produccion.
+- Se sirve como build estatico, que es lo correcto para Docker y servidor.
+
+--------------------------------------------------
+5.3 Configuracion de Nginx para frontend y proxy API
+--------------------------------------------------
+
+Archivo nuevo:
+- `frontend/nginx.conf`
+
+Funcion:
+- Servir el frontend React.
+- Redirigir las peticiones `/api/` hacia el backend.
+
+Comportamiento:
+- `location /api/` hace proxy a:
+  `http://backend:4000/`
+- `location /` usa:
+  `try_files $uri $uri/ /index.html;`
+
+Beneficio:
+- Permite que React funcione como SPA.
+- Permite que las llamadas a `/api` lleguen al backend sin exponer internamente nombres raros al usuario.
+- Es la pieza que hace posible usar rutas relativas en frontend.
+
+--------------------------------------------------
+5.4 docker-compose.yml
+--------------------------------------------------
+
+Archivo nuevo:
+- `docker-compose.yml`
+
+Funcion:
+- Orquestar los contenedores del proyecto.
+
+Servicios definidos:
+
+1. `db`
+- Imagen: `postgres:16-alpine`
+- Variables:
+  - `POSTGRES_DB`
+  - `POSTGRES_USER`
+  - `POSTGRES_PASSWORD`
+- Mapea puerto externo configurable hacia `5432`
+- Usa volumen persistente:
+  `postgres_data`
+- Monta:
+  `./docker/postgres/init:/docker-entrypoint-initdb.d:ro`
+
+2. `backend`
+- Se construye desde `backend/Dockerfile`
+- Variables:
+  - `PORT=4000`
+  - `DB_HOST=db`
+  - `DB_PORT=5432`
+  - `DB_USER`
+  - `DB_PASSWORD`
+  - `DB_DATABASE`
+- Expone el puerto configurable del backend
+
+3. `frontend`
+- Se construye desde `frontend/Dockerfile`
+- Depende del backend
+- Expone el puerto configurable del frontend
+
+Beneficio:
+- Ya existe una forma unica y repetible de levantar toda la aplicacion.
+
+Nota importante:
+- Actualmente `docker-compose.yml` muestra el puerto externo de Postgres como:
+  `${POSTGRES_PORT:-5436}:5432`
+  Esto significa que localmente se puede exponer en 5436 si se desea evitar conflicto con una instalacion local existente de PostgreSQL.
+
+--------------------------------------------------
+5.5 .env.example
+--------------------------------------------------
+
+Archivo nuevo:
+- `.env.example`
+
+Funcion:
+- Servir como plantilla para crear `.env`
+
+Contenido base:
+- `POSTGRES_DB=gestionrecursos`
+- `POSTGRES_USER=gestion_user`
+- `POSTGRES_PASSWORD=gestion_pass`
+- `POSTGRES_PORT=5432`
+- `BACKEND_PORT=4000`
+- `FRONTEND_PORT=3000`
+
+Beneficio:
+- Centraliza la configuracion.
+- Facilita cambiar puertos o credenciales sin tocar el codigo.
+
+Observacion:
+- En `docker-compose.yml` el fallback actual de Postgres quedo en `5436`, mientras que `.env.example` sigue mostrando `5432`.
+- Esto no esta necesariamente mal, pero conviene unificarlo despues para evitar confusion.
+
+--------------------------------------------------
+5.6 .dockerignore
+--------------------------------------------------
+
+Archivo nuevo:
+- `.dockerignore`
+
+Funcion:
+- Evitar que Docker copie archivos innecesarios al contexto de build.
+
+Contenido relevante:
+- `.git`
+- `.gitignore`
+- `.codex`
+- `node_modules`
+- `backend/node_modules`
+- `frontend/node_modules`
+- `frontend/build`
+- `npm-debug.log*`
+
+Beneficio:
+- Reduce tamano de contexto.
+- Evita builds mas lentos.
+- Evita meter basura del entorno local en las imagenes.
+
+==================================================
+6. SOPORTE PARA INICIALIZAR POSTGRES CON SQL
+==================================================
+
+Se agrego soporte para cargar la base automaticamente cuando el contenedor `db` se crea por primera vez.
+
+Archivo nuevo:
+- `docker/postgres/init/README.md`
+
+Funcion:
+- Documentar que los archivos `.sql` o `.sql.gz` puestos en esa carpeta se ejecutan automaticamente al inicializar Postgres.
+
+Posteriormente se indico que la base real enviada debia colocarse aqui:
+- `docker/postgres/init/001-BD_PRUEBA.sql`
+
+Estado actual:
+- Ya existe el archivo:
+  `docker/postgres/init/001-BD_PRUEBA.sql`
+
+Revision hecha sobre la base:
+- Se confirmo que es un dump valido de PostgreSQL.
+- El archivo contiene definicion de tablas como `alumno`, `division`, `empleado`, etc.
+- El dump parece provenir de PostgreSQL 14.22.
+
+Beneficio:
+- Cuando se ejecute `docker compose up` por primera vez con volumen limpio, Postgres podra crear el esquema y datos automaticamente a partir del dump.
+
+==================================================
+7. AJUSTES DE FLUJO Y RECOMENDACIONES DE USO LOCAL
+==================================================
+
+Tambien se dejo definida la forma recomendada de trabajar primero en local:
+
+Pasos recomendados:
+1. Crear `.env` a partir de `.env.example`
+2. Colocar el SQL dentro de `docker/postgres/init/`
+3. Ejecutar:
+   `docker compose down -v`
+4. Ejecutar:
+   `docker compose up --build`
+
+Motivo del `down -v`:
+- Postgres solo ejecuta los scripts de inicializacion la primera vez que se crea el volumen.
+- Si el volumen ya existia, el SQL no se vuelve a correr.
+
+Objetivo de esta estrategia:
+- Verificar que todo funcione en local antes de moverlo al servidor.
+
+==================================================
+8. VALIDACIONES HECHAS Y LIMITACIONES EN EL ENTORNO ACTUAL
+==================================================
+
+Se intento validar construccion y sintaxis de forma automatica, pero el entorno de trabajo actual no tenia instalados:
+- `node`
+- `npm`
+
+Por eso no fue posible ejecutar aqui:
+- `npm run build`
+- `node --check ...`
+
+Esto significa que la estructura Docker ya quedo preparada, pero la validacion final real debe hacerse en tu maquina local con Docker disponible.
+
+==================================================
+9. RESUMEN CONCRETO DE LOS CAMBIOS MAS IMPORTANTES
+==================================================
+
+Los cambios mas importantes realizados hasta ahora son estos:
+
+1. Se estudio la arquitectura completa del proyecto para entender backend, frontend, rutas y base de datos.
+
+2. Se detecto el principal bloqueo para Docker:
+   el frontend dependia de una IP fija del backend.
+
+3. Se reemplazaron las URLs absolutas del backend por rutas relativas `/api`.
+
+4. Se agrego proxy local al frontend mediante:
+   `frontend/package.json`
+
+5. Se preparo el backend para leer su puerto por variable de entorno.
+
+6. Se creo la infraestructura base de Docker:
+   - `backend/Dockerfile`
+   - `frontend/Dockerfile`
+   - `frontend/nginx.conf`
+   - `docker-compose.yml`
+   - `.env.example`
+   - `.dockerignore`
+
+7. Se habilito la inicializacion automatica de PostgreSQL con archivos SQL.
+
+8. Se reviso la base proporcionada y se coloco en la ruta correcta:
+   `docker/postgres/init/001-BD_PRUEBA.sql`
+
+9. Se agrego `Keycloak 26.5.3` como servicio independiente en Docker, junto con una base PostgreSQL propia separada de la app.
+
+10. Se dejo a `keycloak` intencionalmente aislado:
+- sin cambios en `InicioSesion.js`
+- sin cambios en el backend de autenticacion
+- sin integracion con el flujo actual de login
+- listo solo para levantarse y ser configurado despues
+
+==================================================
+10. ESTADO ACTUAL DEL PROYECTO
+==================================================
+
+El proyecto actualmente ya esta encaminado para probarse en local con Docker.
+
+Lo que ya quedo listo:
+- Backend contenerizado
+- Frontend contenerizado
+- Proxy reverso con Nginx
+- Base PostgreSQL en Docker
+- Keycloak en Docker como servicio independiente
+- Base propia de Keycloak en Docker
+- Carpeta de inicializacion para la BD
+- Frontend desacoplado de la IP antigua
+
+Lo que sigue:
+- Levantar localmente con Docker
+- Revisar errores de importacion de BD si aparecen
+- Confirmar que login, usuarios, materiales y prestamos funcionen
+- Despues de eso, preparar despliegue al servidor
+
+==================================================
+11. NOTAS FINALES
+==================================================
+
+Se detectaron tambien algunas observaciones que no se corrigieron todavia, pero conviene tener presentes para despues:
+- El login sigue usando contrasenas en texto plano
+- No hay autenticacion robusta con token o sesion
+- La autorizacion sigue dependiendo mucho del frontend
+- Seria bueno unificar el puerto por defecto de Postgres entre `.env.example` y `docker-compose.yml`
+
+Fin de la bitacora.

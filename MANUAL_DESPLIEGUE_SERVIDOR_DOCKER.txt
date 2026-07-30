@@ -1,0 +1,504 @@
+MANUAL DE DESPLIEGUE EN SERVIDOR CON DOCKER
+
+Proyecto:
+App-GestionRecursosCLCD-
+
+Objetivo de este manual:
+Explicar como mover el proyecto desde el ambiente local hacia un servidor usando Docker, de forma ordenada, segura y repetible.
+
+Este manual esta pensado para despues de haber confirmado que el proyecto ya funciona localmente con Docker.
+
+==================================================
+1. ANTES DE SUBIR AL SERVIDOR
+==================================================
+
+Antes de desplegar en servidor debes tener listo lo siguiente:
+
+1. El proyecto ya corre correctamente en local con:
+- frontend
+- backend
+- base de datos
+
+2. Debes tener identificadas estas decisiones:
+- si la base de datos en servidor correra dentro de Docker
+  o
+- si el backend se conectara a una base PostgreSQL ya existente en el servidor
+
+3. Debes contar con acceso al servidor por terminal.
+
+4. Debes saber:
+- la IP o dominio del servidor
+- los puertos disponibles
+- si ya existe Nginx, Apache o algun proxy reverso instalado
+
+==================================================
+2. RECOMENDACION GENERAL
+==================================================
+
+La recomendacion mas segura es esta:
+
+1. Primero desplegar en servidor de prueba o en una carpeta separada.
+
+2. Validar:
+- login
+- consultas a materiales
+- prestamos
+- conexion a base
+
+3. Solo despues mover o actualizar el ambiente de produccion.
+
+Si el servidor es directamente de produccion, entonces minimo debes:
+- hacer respaldo de la base antes de cualquier cambio
+- guardar una copia del `.env`
+- no borrar nada existente sin confirmar
+
+==================================================
+3. QUE NECESITA TENER INSTALADO EL SERVIDOR
+==================================================
+
+El servidor debe tener instalado:
+- Docker
+- Docker Compose plugin
+- Git
+
+Comandos para verificar:
+- `docker --version`
+- `docker compose version`
+- `git --version`
+
+Si el servidor usa Ubuntu, normalmente primero se instala Docker y luego se habilita el servicio.
+
+==================================================
+4. ARCHIVOS IMPORTANTES PARA EL DESPLIEGUE
+==================================================
+
+Los archivos clave del proyecto son:
+
+- `docker-compose.yml`
+- `backend/Dockerfile`
+- `frontend/Dockerfile`
+- `frontend/nginx.conf`
+- `.env`
+- `docker/postgres/init/001-BD_PRUEBA.sql`
+- configuracion de Keycloak incluida en `docker-compose.yml`
+
+Tambien pueden ser utiles:
+- `MANUAL_USO_DOCKER.txt`
+- `CAMBIOS_REALIZADOS_DOCKER_Y_LOCAL.txt`
+
+==================================================
+5. FORMAS DE LLEVAR EL PROYECTO AL SERVIDOR
+==================================================
+
+Tienes dos caminos principales:
+
+Opcion 1. Usar Git
+- subir cambios al repositorio
+- entrar al servidor
+- clonar o hacer `git pull`
+
+Opcion 2. Copiar el proyecto manualmente
+- usando `scp`
+- usando `rsync`
+- usando SFTP
+
+Recomendacion:
+- si ya trabajan con Git, usa Git
+- si aun no, `rsync` o `scp` tambien funcionan bien
+
+==================================================
+6. ESTRUCTURA RECOMENDADA EN EL SERVIDOR
+==================================================
+
+Es buena idea usar una carpeta dedicada para la app, por ejemplo:
+
+- `/opt/app-gestionrecursos/`
+o
+- `/home/usuario/app-gestionrecursos/`
+
+Dentro de esa carpeta debe quedar el proyecto completo.
+
+==================================================
+7. ARCHIVO .env PARA EL SERVIDOR
+==================================================
+
+En servidor debes crear un `.env` real, no usar directamente `.env.example`.
+
+Ejemplo base:
+
+POSTGRES_DB=gestionrecursos
+POSTGRES_USER=gestion_user
+POSTGRES_PASSWORD=una_password_segura
+POSTGRES_PORT=5432
+
+BACKEND_PORT=4000
+FRONTEND_PORT=3000
+
+KEYCLOAK_DB_NAME=keycloak
+KEYCLOAK_DB_USER=keycloak
+KEYCLOAK_DB_PASSWORD=una_password_segura_para_keycloak
+KEYCLOAK_ADMIN_USER=admin
+KEYCLOAK_ADMIN_PASSWORD=una_password_admin_segura
+KEYCLOAK_PORT=8081
+
+Recomendaciones:
+- usa una contrasena distinta a la local
+- no subas el `.env` al repositorio
+- guarda una copia segura antes de modificarlo
+- si vas a usar Keycloak en servidor, tambien cambia sus passwords por valores reales y seguros
+
+==================================================
+8. DECISION IMPORTANTE SOBRE LA BASE DE DATOS
+==================================================
+
+Aqui debes elegir una de estas dos formas:
+
+--------------------------------------------------
+Opcion A. Base de datos dentro de Docker
+--------------------------------------------------
+
+Usa esta opcion si:
+- el servidor aun no tiene PostgreSQL configurado para este proyecto
+- quieres que todo viva en el mismo stack Docker
+
+Ventajas:
+- todo queda contenido en `docker compose`
+- es mas facil replicarlo
+
+Cuidados:
+- debes respaldar el volumen de Postgres
+- debes proteger bien credenciales y puertos
+
+--------------------------------------------------
+Opcion B. Base de datos externa o ya existente
+--------------------------------------------------
+
+Usa esta opcion si:
+- el servidor ya tiene PostgreSQL en uso
+- no quieres migrar la BD a Docker
+- ya existe una base productiva funcionando
+
+En ese caso:
+- puedes quitar el servicio `db` del `docker-compose.yml`
+  o
+- dejarlo comentado en una version para servidor
+
+Y el backend debera apuntar a:
+- `DB_HOST`
+- `DB_PORT`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_DATABASE`
+
+de la base real del servidor.
+
+Recomendacion:
+- si ya existe una base productiva, suele ser mas seguro conectar el backend a esa base primero, antes de mover tambien PostgreSQL a Docker.
+
+Nota sobre Keycloak:
+- actualmente `keycloak` ya puede levantarse como servicio independiente
+- usa su propia base `keycloak-db`
+- no esta integrado todavia con el login actual de la app
+- puede desplegarse sin afectar el funcionamiento actual mientras se mantenga aislado
+
+==================================================
+9. PRIMER DESPLIEGUE EN SERVIDOR
+==================================================
+
+Pasos recomendados:
+
+1. Entrar al servidor.
+
+2. Ir a la carpeta del proyecto.
+
+3. Confirmar que exista el archivo `.env`.
+
+4. Confirmar que el SQL este en la ruta correcta si la base se inicializara desde cero:
+- `docker/postgres/init/001-BD_PRUEBA.sql`
+
+5. Ejecutar:
+- `docker compose up -d --build`
+
+Esto:
+- construye las imagenes
+- levanta contenedores
+- deja la app corriendo en segundo plano
+
+6. Revisar estado:
+- `docker compose ps`
+
+7. Revisar logs:
+- `docker compose logs backend`
+- `docker compose logs frontend`
+- `docker compose logs db`
+- `docker compose logs keycloak`
+- `docker compose logs keycloak-db`
+
+==================================================
+10. SI LA BASE SE VA A CARGAR DESDE CERO
+==================================================
+
+Solo si la base se inicializara desde cero dentro de Docker:
+
+1. Asegurate de que el archivo SQL correcto este dentro de:
+- `docker/postgres/init/`
+
+2. Si ya existia antes un volumen viejo y quieres reinicializar:
+- `docker compose down -v`
+
+3. Luego vuelve a levantar:
+- `docker compose up -d --build`
+
+Advertencia importante:
+- `down -v` elimina el volumen de Postgres del stack
+- si ya habia datos productivos ahi, los perderias
+
+No uses `down -v` en produccion sin respaldo previo.
+
+==================================================
+11. VALIDACION DESPUES DEL DESPLIEGUE
+==================================================
+
+Despues de desplegar, valida:
+
+1. Que los contenedores esten arriba:
+- `docker compose ps`
+
+2. Que frontend responda desde navegador:
+- `http://IP_DEL_SERVIDOR:3000`
+  o el puerto configurado
+
+3. Que el backend responda:
+- `http://IP_DEL_SERVIDOR:4000`
+
+4. Que Keycloak quede accesible si decidiste levantarlo:
+- `http://IP_DEL_SERVIDOR:8081`
+
+5. Que el login funcione.
+
+6. Que se puedan consultar:
+- alumnos
+- empleados
+- materiales
+- prestamos
+
+7. Que se puedan registrar operaciones importantes sin errores.
+
+8. Confirmar que Keycloak este arriba pero sin interferir con la app actual.
+
+==================================================
+12. SI TIENES DOMINIO O PROXY REVERSO
+==================================================
+
+Si despues quieres publicar la app con dominio, puedes hacerlo con:
+- Nginx en el servidor
+- Traefik
+- Caddy
+
+En ese caso normalmente:
+- el frontend ya no se expone directamente en `:3000`
+- el proxy publica el dominio
+- el proxy redirige trafico al contenedor correcto
+
+Ejemplo conceptual:
+- `https://tu-dominio.com` -> frontend
+- frontend internamente hace `/api`
+- Nginx del frontend pasa `/api` al backend
+
+Si no tienes dominio todavia, puedes trabajar primero con:
+- `http://IP_DEL_SERVIDOR:3000`
+
+==================================================
+13. ACTUALIZAR LA APP EN EL SERVIDOR
+==================================================
+
+Cada vez que hagas cambios en el codigo, el flujo recomendado es:
+
+1. Subir cambios al repositorio
+   o copiar los nuevos archivos al servidor
+
+2. Entrar al servidor
+
+3. Ir a la carpeta del proyecto
+
+4. Actualizar codigo:
+- `git pull`
+
+5. Reconstruir y relanzar:
+- `docker compose up -d --build`
+
+6. Revisar logs:
+- `docker compose logs backend`
+- `docker compose logs frontend`
+- `docker compose logs keycloak`
+
+==================================================
+14. COMANDOS UTILES EN SERVIDOR
+==================================================
+
+Levantar:
+- `docker compose up -d --build`
+
+Ver contenedores:
+- `docker compose ps`
+
+Ver logs de todos:
+- `docker compose logs`
+
+Ver logs solo del backend:
+- `docker compose logs backend`
+
+Ver logs solo del frontend:
+- `docker compose logs frontend`
+
+Ver logs solo de la base:
+- `docker compose logs db`
+
+Ver logs de Keycloak:
+- `docker compose logs keycloak`
+
+Ver logs de la base de Keycloak:
+- `docker compose logs keycloak-db`
+
+Entrar al backend:
+- `docker compose exec backend sh`
+
+Entrar a la base:
+- `docker compose exec db sh`
+
+Entrar a Keycloak:
+- `docker compose exec keycloak sh`
+
+Entrar a la base de Keycloak:
+- `docker compose exec keycloak-db sh`
+
+Detener:
+- `docker compose down`
+
+==================================================
+15. RESPALDO Y SEGURIDAD
+==================================================
+
+Antes de cambios importantes en servidor, haz siempre esto:
+
+1. Respaldar la base de datos.
+
+2. Guardar copia del `.env`.
+
+3. Guardar el `docker-compose.yml` que este funcionando.
+
+4. Tomar nota de la version actual del proyecto o commit.
+
+Recomendaciones adicionales:
+- no expongas PostgreSQL a internet si no es necesario
+- no expongas la base de Keycloak a internet si no es necesario
+- usa contrasenas seguras
+- limita acceso SSH
+- si es posible usa firewall para abrir solo puertos necesarios
+
+==================================================
+16. ESTRATEGIA BASICA DE ROLLBACK
+==================================================
+
+Si una actualizacion falla:
+
+1. Revisa logs para detectar el problema.
+
+2. Si el problema es de codigo:
+- regresa al commit anterior
+- vuelve a ejecutar:
+  `docker compose up -d --build`
+
+3. Si el problema es de base:
+- no destruyas volumen ni datos sin respaldo
+- restaura desde respaldo si fue necesario
+
+4. Si cambiaste `.env` y eso rompio algo:
+- vuelve al `.env` anterior
+- levanta de nuevo:
+  `docker compose up -d --build`
+
+==================================================
+17. ERRORES COMUNES EN SERVIDOR
+==================================================
+
+Problema:
+El puerto 3000 o 4000 ya esta ocupado.
+
+Solucion:
+- cambia `FRONTEND_PORT` o `BACKEND_PORT` en `.env`
+
+--------------------------------------------------
+
+Problema:
+El backend no conecta a PostgreSQL.
+
+Solucion:
+- revisar variables `DB_*`
+- revisar `docker compose logs backend`
+- revisar que el servicio `db` este arriba si usas base Docker
+
+--------------------------------------------------
+
+Problema:
+La base no cargo datos.
+
+Solucion:
+- confirmar que el SQL este en `docker/postgres/init/`
+- recordar que solo se ejecuta al crear volumen nuevo
+
+--------------------------------------------------
+
+Problema:
+El frontend abre pero no carga informacion.
+
+Solucion:
+- revisar logs del backend
+- revisar que `/api` este pasando bien por Nginx
+- revisar conectividad del backend a la BD
+
+--------------------------------------------------
+
+Problema:
+Keycloak levanta pero aun no hace nada en la app.
+
+Explicacion:
+- eso es el comportamiento esperado en este momento
+- `keycloak` solo esta desplegado como servicio independiente
+- todavia no se ha conectado al flujo de autenticacion del frontend ni del backend
+
+==================================================
+18. FLUJO RECOMENDADO FINAL
+==================================================
+
+Flujo recomendado para tu proyecto:
+
+1. Probar todo en local con Docker
+2. Preparar `.env` de servidor
+3. Definir si PostgreSQL sera Docker o externo
+4. Subir proyecto al servidor
+5. Ejecutar:
+   `docker compose up -d --build`
+6. Revisar logs y navegador
+7. Validar funcionalidades criticas
+8. Documentar la configuracion final del servidor
+
+==================================================
+19. RESUMEN RAPIDO
+==================================================
+
+Pasos minimos para desplegar:
+
+1. Tener Docker instalado en servidor
+2. Subir el proyecto
+3. Crear `.env`
+4. Confirmar si usaras base en Docker o externa
+5. Ejecutar:
+   `docker compose up -d --build`
+6. Revisar:
+   `docker compose ps`
+   `docker compose logs`
+7. Probar la app desde navegador
+8. Revisar opcionalmente Keycloak en su puerto independiente
+
+Fin del manual.
