@@ -19,7 +19,7 @@ const MostrarUsuarios = () => {
   useEffect(() => {
     if (initialized){
       //si el alumno no es coordinador ni tecnico, lo redirige al inicio
-      const esPersonal = keycloak.hasRealmRole("coordinadores") || keycloak.hasRealmRole("técnicos");
+      const esPersonal = keycloak.hasRealmRole("COORDINADOR") || keycloak.hasRealmRole("TECNICO");
 
       if (!keycloak.authenticated || !esPersonal) {
         navigate("/inicio-alumno");

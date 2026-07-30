@@ -226,9 +226,9 @@ const getEmpleadoPermisos = async (req, res, next) => {
   try {
     const { id } = req.params;
     const empleado = await pool.query(
-      "SELECT noeconomico FROM empleado WHERE id = $1",
-      [id]
-    );
+  "SELECT noeconomico FROM empleado WHERE noeconomico = $1",
+  [id]
+);
 
     if (empleado.rows.length === 0)
       return res.status(404).json({ message: "Empleado no encontrado" });

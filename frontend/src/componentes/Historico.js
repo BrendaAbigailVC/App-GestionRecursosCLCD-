@@ -122,7 +122,7 @@ const Historico = () => {
 
       // Verificamos si tiene rol de empleado (técnico o coordinador)
       const roles = keycloak.realmAccess?.roles || [];
-      const esEmpleado = roles.includes("coordinadores") || roles.includes("técnicos");
+      const esEmpleado = roles.includes("COORDINADOR") || roles.includes("técnicos");
 
       if (!esEmpleado) {
         navigate("/inicio-alumno");

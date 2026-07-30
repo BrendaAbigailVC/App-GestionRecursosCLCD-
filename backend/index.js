@@ -6,7 +6,8 @@ const empleadoRoutes = require('./routes/empleado.routes');
 const alumnoRoutes = require('./routes/alumno.routes');
 const materialRoutes = require('./routes/material.routes');
 const prestamoRoutes = require('./routes/prestamo.routes');
-const loginRoutes = require('./routes/login.routes');
+//const loginRoutes = require('./routes/login.routes');
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,7 +24,7 @@ app.use('/api/empleados', empleadoRoutes);
 app.use('/api/alumnos', alumnoRoutes);
 app.use('/api/materiales', materialRoutes);
 app.use('/api/prestamos', prestamoRoutes);
-app.use('/api/auth', loginRoutes);
+app.use('/api/auth', authRoutes);
 app.use((err, req, res, next) => {
     return res.json({
         message: err.message

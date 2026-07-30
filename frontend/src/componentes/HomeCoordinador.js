@@ -28,36 +28,57 @@ const HomeCoordinador = () => {
  
   const [permisosDB, setPermisosDB] = useState([]);
 
-  useEffect(() => {
-    if (initialized) {
-      if (!keycloak.authenticated) {
-        navigate("/");
+useEffect(() => {
+  if (!initialized) return;
+
+  if (!keycloak.authenticated) {
+    navigate("/login", { replace: true });
+    return;
+  }
+
+  const cargarPermisosRealTime = async () => {
+    try {
+      const idKeycloak = keycloak.tokenParsed?.sub;
+
+      const resEmp = await fetch(
+        `${API_BASE_URL}/empleados/perfil/${idKeycloak}`
+      );
+
+      if (!resEmp.ok) {
+        console.error("Empleado no encontrado");
         return;
       }
 
-      //cargar permisos desde la Base de Datos
-      const cargarPermisosRealTime = async () => {
-        try {
-          const idKeycloak = keycloak.tokenParsed?.sub;
-          //obtenemos por UUID
-          const resEmp = await fetch(`${API_BASE_URL}/empleados/perfil/${idKeycloak}`);
-          const empleado = await resEmp.json();
+      const empleado = await resEmp.json();
 
-          if (empleado && empleado.noeconomico) {
-            //permisos asignados
-            const resPerm = await fetch(`${API_BASE_URL}/empleados/${empleado.noeconomico}/permisos`);
-            const dataPerm = await resPerm.json();
-            //guardamos los IDs numéricos: [1, 2, 4, 5]
-            setPermisosDB(dataPerm.map(p => Number(p.idpermiso)));
-          }
-        } catch (error) {
-          console.error("Error al cargar permisos dinámicos:", error);
-        }
-      };
+      if (!empleado?.noeconomico) {
+        console.error("Empleado sin número económico");
+        return;
+      }
 
-      cargarPermisosRealTime();
+      const resPerm = await fetch(
+        `${API_BASE_URL}/empleados/${empleado.noeconomico}/permisos`
+      );
+
+      if (!resPerm.ok) {
+        console.error("No se pudieron obtener los permisos");
+        return;
+      }
+
+      const dataPerm = await resPerm.json();
+
+      setPermisosDB(
+        dataPerm.map((p) => Number(p.idpermiso))
+      );
+
+    } catch (error) {
+      console.error("Error al cargar permisos dinámicos:", error);
     }
-  }, [initialized, keycloak, navigate]);
+  };
+
+  cargarPermisosRealTime();
+
+}, [initialized, keycloak.authenticated, navigate]);
 
   if (!initialized) {
     return <div style={{ padding: "20px", textAlign: "center" }}><h2>Verificando...</h2></div>;

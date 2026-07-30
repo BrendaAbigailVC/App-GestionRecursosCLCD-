@@ -49,12 +49,17 @@ const HomeAlumno = () => {
   //}, [navigate]);
 
   useEffect(() => {
-    if (!initialized) return;
+  if (!initialized) return;
 
-    if (!keycloak.authenticated || !keycloak.hasRealmRole("alumnos")) {
-      navigate("/", { replace: true });
-    }
-  }, [initialized, keycloak, navigate]);
+  if (!keycloak.authenticated) {
+    navigate("/", { replace: true });
+    return;
+  }
+
+  if (!keycloak.hasRealmRole("ALUMNO")) {
+    navigate("/acceso-denegado", { replace: true });
+  }
+}, [initialized, keycloak.authenticated, navigate]);
 
   return (
     <>

@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useRef } from "react";
 import { useKeycloak } from "@react-keycloak/web";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../iniciosesion.css";
 
 import { API_BASE_URL } from "./config";
@@ -8,14 +8,17 @@ import { API_BASE_URL } from "./config";
 const IniciarSesion = () => {
   const { keycloak, initialized } = useKeycloak();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Sacamos la función afuera del useEffect para que el botón pueda usarla
-  // Usamos useCallback para que la función no se recree innecesariamente
-  const sincronizarUsuario = useCallback(async () => {
+  // Evita ejecutar la sincronización más de una vez
+  const yaSincronizo = useRef(false);
+
+  const sincronizarUsuario = async () => {
     if (!keycloak.token) return;
 
     try {
       console.log("Iniciando petición al backend...");
+
       const response = await fetch(`${API_BASE_URL}/auth/login-check`, {
         method: "GET",
         headers: {
@@ -24,39 +27,63 @@ const IniciarSesion = () => {
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Sincronización con backend exitosa:", data);
-
-        const perfil = data.datos || data.user || {};
-        localStorage.setItem("userData", JSON.stringify(perfil));
-
-        if (data.tipo === "alumno" && perfil.id) {
-          localStorage.setItem("idUsuario", perfil.id);
-          localStorage.setItem("tipoUsuario", "alumno");
-        } else if (data.tipo === "empleado" && perfil.id) {
-          localStorage.setItem("idUsuario", perfil.id);
-          localStorage.setItem("tipoUsuario", "empleado");
-        }
-
-        const roles = keycloak.realmAccess?.roles ?? [];
-        if (roles.includes("coordinadores") || roles.includes("técnicos")) {
-          navigate("/inicio-empleado");
-        } else {
-          navigate("/inicio-alumno");
-        }
-      } else {
+      if (!response.ok) {
         if (response.status === 404) {
-          alert("Error: Tu cuenta de Keycloak es válida, pero no está registrada en la base de datos local. Contacta al administrador.");
+          alert(
+            "Tu cuenta existe en Keycloak, pero no está registrada en la base de datos."
+          );
         } else {
-          alert("Hubo un problema al verificar tu identidad en el servidor.");
+          alert("Error al verificar la identidad.");
+        }
+        return;
+      }
+
+      const data = await response.json();
+
+      console.log("Sincronización con backend exitosa:", data);
+
+      const perfil = data.datos || data.user || {};
+
+      localStorage.setItem("userData", JSON.stringify(perfil));
+      localStorage.setItem(
+        "roles",
+        JSON.stringify(keycloak.realmAccess?.roles ?? [])
+      );
+
+      if (data.tipo === "alumno") {
+        localStorage.setItem("idUsuario", perfil.id);
+        localStorage.setItem("tipoUsuario", "alumno");
+      }
+
+      if (data.tipo === "empleado") {
+        localStorage.setItem("idUsuario", perfil.id);
+        localStorage.setItem("tipoUsuario", "empleado");
+      }
+
+      const roles = keycloak.realmAccess?.roles ?? [];
+
+      console.log("Roles Keycloak:", roles);
+
+      // Navegar solo si estamos en login
+      if (
+        location.pathname === "/" ||
+        location.pathname === "/login"
+      ) {
+        if (
+          roles.includes("COORDINADOR") ||
+          roles.includes("TECNICO") ||
+          roles.includes("PROFESOR")
+        ) {
+          navigate("/inicio-empleado", { replace: true });
+        } else if (roles.includes("ALUMNO")) {
+          navigate("/inicio-alumno", { replace: true });
         }
       }
     } catch (error) {
-      console.error("Error de red al conectar con el backend:", error);
-      alert("No se pudo conectar con el servidor. Revisa si el backend está encendido.");
+      console.error(error);
+      alert("No se pudo conectar con el backend.");
     }
-  }, [keycloak.token, keycloak.realmAccess, navigate]);
+  };
 
   useEffect(() => {
     console.log("Estado de keycloak:", {
@@ -64,10 +91,28 @@ const IniciarSesion = () => {
       authenticated: keycloak.authenticated,
     });
 
-    if (initialized && keycloak.authenticated) {
-      sincronizarUsuario();
+    if (!initialized) return;
+    if (!keycloak.authenticated) return;
+
+    // Solo sincronizar una vez
+    if (yaSincronizo.current) return;
+
+    // Solo desde login
+    if (
+      location.pathname !== "/" &&
+      location.pathname !== "/login"
+    ) {
+      return;
     }
-  }, [initialized, keycloak.authenticated, sincronizarUsuario]);
+
+    yaSincronizo.current = true;
+    sincronizarUsuario();
+
+  }, [
+    initialized,
+    keycloak.authenticated,
+    location.pathname,
+  ]);
 
   if (!initialized) {
     return (
@@ -81,6 +126,7 @@ const IniciarSesion = () => {
     <div className="login-page">
       <div className="login-card">
         <h1 className="login-title">Plataforma CLCD</h1>
+
         <p className="login-subtitle">
           Sistema de Gestión de Recursos - UAM Cuajimalpa
         </p>
@@ -91,7 +137,11 @@ const IniciarSesion = () => {
               <p className="login-info">
                 Inicia sesión para gestionar tus materiales y préstamos.
               </p>
-              <button onClick={() => keycloak.login()} className="login-button">
+
+              <button
+                onClick={() => keycloak.login()}
+                className="login-button"
+              >
                 Ingresar con Cuenta UAM
               </button>
             </>
@@ -100,9 +150,12 @@ const IniciarSesion = () => {
               <p>Autenticado correctamente.</p>
 
               <button
-                onClick={() => sincronizarUsuario()}
                 className="login-button"
-                style={{ marginTop: "10px", backgroundColor: "#28a745" }}
+                style={{
+                  marginTop: "10px",
+                  backgroundColor: "#28a745",
+                }}
+                onClick={sincronizarUsuario}
               >
                 Forzar Sincronización Manual
               </button>
