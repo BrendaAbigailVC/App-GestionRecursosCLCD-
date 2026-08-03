@@ -68,30 +68,32 @@ const createEmpleado = async (req, res, next) => {
       tipo,
     } = req.body;
 
-let rol = "";
+    const tipoEmpleado = Number(tipo);
 
-switch (Number(tipo)) {
-  case 0:
-    rol = "COORDINADOR";
-    break;
-  case 1:
-    rol = "TECNICO";
-    break;
-  case 2:
-    rol = "PROFESOR";
-    break;
-  default:
-    throw new Error("Tipo de empleado inválido");
-}
+    let rol = "";
 
-const id_keycloak = await crearUsuarioKeycloak({
-  username: correoInstitucional,
-  email: correoInstitucional,
-  password,
-  firstName: nombre,
-  lastName: `${apellidoPaterno} ${apellidoMaterno}`,
-  rol,
-});
+    switch (Number(tipo)) {
+      case 0:
+        rol = "COORDINADOR";
+        break;
+      case 1:
+        rol = "TECNICO";
+        break;
+      case 2:
+        rol = "PROFESOR";
+        break;
+      default:
+        throw new Error("Tipo de empleado inválido");
+    }
+
+    const id_keycloak = await crearUsuarioKeycloak({
+      username: correoInstitucional,
+      email: correoInstitucional,
+      password,
+      firstName: nombre,
+      lastName: `${apellidoPaterno} ${apellidoMaterno}`,
+      rol,
+    });
 
     await client.query("BEGIN");
 
@@ -118,17 +120,25 @@ const id_keycloak = await crearUsuarioKeycloak({
 
     let permisosAsignar = [];
 
-    if (tipo === 0) {
-      permisosAsignar = [0, 1, 2, 3, 4, 5];
-    } else if (tipo === 1) {
-      permisosAsignar = [0, 1, 2];
-    } else if (tipo === 2) {
-      permisosAsignar = [1, 2, 4, 5];
+    switch (tipoEmpleado) {
+      case 0: // Coordinador
+        permisosAsignar = [0, 1, 2, 3, 4];
+        break;
+      case 1: // Técnico
+        permisosAsignar = [0, 1, 2];
+        break;
+
+      case 2: // Profesor
+        permisosAsignar = [1, 2, 4];
+        break;
+
+      default:
+        throw new Error("Tipo de empleado inválido");
     }
 
     for (const permisoId of permisosAsignar) {
       await client.query(
-        `INSERT INTO empleado_permiso (noEconomico, idPermiso) VALUES ($1, $2)`,
+        `INSERT INTO empleado_permiso (noEconomico, idPermiso) VALUES ($1, $2) ON CONFLICT (noEconomico, idPermiso) DO NOTHING`,
         [noEconomico, permisoId]
       );
     }
@@ -252,9 +262,9 @@ const getEmpleadoPermisos = async (req, res, next) => {
   try {
     const { id } = req.params;
     const empleado = await pool.query(
-  "SELECT noeconomico FROM empleado WHERE noeconomico = $1",
-  [id]
-);
+      "SELECT noeconomico FROM empleado WHERE noeconomico = $1",
+      [id]
+    );
 
     if (empleado.rows.length === 0)
       return res.status(404).json({ message: "Empleado no encontrado" });
