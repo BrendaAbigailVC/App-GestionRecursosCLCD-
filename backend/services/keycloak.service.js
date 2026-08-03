@@ -1,11 +1,11 @@
 const KcAdminClient = require("@keycloak/keycloak-admin-client").default;
 
-const kcAdminClient = new KcAdminClient({
-  baseUrl: process.env.KEYCLOAK_URL,
-  realmName: "master",
-});
-
 async function autenticarAdmin() {
+  const kcAdminClient = new KcAdminClient({
+    baseUrl: process.env.KEYCLOAK_URL,
+    realmName: "master",
+  });
+
   await kcAdminClient.auth({
     username: process.env.KEYCLOAK_ADMIN_USER,
     password: process.env.KEYCLOAK_ADMIN_PASSWORD,
@@ -16,7 +16,10 @@ async function autenticarAdmin() {
   kcAdminClient.setConfig({
     realmName: process.env.KEYCLOAK_REALM,
   });
+
+  return kcAdminClient;
 }
+
 async function crearUsuarioKeycloak({
   username,
   email,
@@ -25,7 +28,7 @@ async function crearUsuarioKeycloak({
   lastName,
   rol,
 }) {
-  await autenticarAdmin();
+  const kcAdminClient = await autenticarAdmin();
 
   // Verificar si ya existe
   const existentes = await kcAdminClient.users.find({
@@ -58,6 +61,10 @@ async function crearUsuarioKeycloak({
     throw new Error("No fue posible obtener el usuario creado en Keycloak");
   }
 
+  console.log("Contraseña que se enviará:", password);
+console.log("Usuario:", username);
+
+
   // Asignar contraseña
   await kcAdminClient.users.resetPassword({
     realm: process.env.KEYCLOAK_REALM,
@@ -68,6 +75,7 @@ async function crearUsuarioKeycloak({
       value: password,
     },
   });
+  console.log("Contraseña asignada correctamente");
 
   // Buscar rol
   const realmRole = await kcAdminClient.roles.findOneByName({

@@ -1,4 +1,5 @@
 const pool = require("../db");
+const { crearUsuarioKeycloak } = require("../services/keycloak.service");
 
 const getAllAlumnos = async (req, res, next) => {
   try {
@@ -25,14 +26,11 @@ const getAlumno = async (req, res, next) => {
 };
 
 const createAlumno = async (req, res, next) => {
-  console.log("DATOS RECIBIDOS EN EL BACKEND:", req.body); // <-- AGREGA ESTO
-
   try {
     const {
       matricula,
-      //id_keycloak,
       nombre,
-      apellidopaterno, // Asegúrate que se llamen así
+      apellidopaterno,
       apellidomaterno,
       unidad,
       division,
@@ -44,38 +42,59 @@ const createAlumno = async (req, res, next) => {
 
     const sancion = 0;
 
+    // Contraseña inicial
+    const password = matricula.toString();
+
+    // Crear usuario en Keycloak
+    const idKeycloak = await crearUsuarioKeycloak({
+      username: correoinstitucional,
+      email: correoinstitucional,
+      password,
+      firstName: nombre,
+      lastName: `${apellidopaterno} ${apellidomaterno}`,
+      rol: "ALUMNO",
+    });
+
+    // Guardar alumno
     const result = await pool.query(
       `INSERT INTO alumno (
-         id,
-         matricula,
-         id_keycloak, 
-         nombre, 
-         apellidopaterno, 
-         apellidomaterno, 
-         unidad, division, 
-         licenciatura, 
-         estado, 
-         sancion, 
-         correoinstitucional, 
-         observaciones) 
-       VALUES ($1, $1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+          id,
+          matricula,
+          id_keycloak,
+          nombre,
+          apellidopaterno,
+          apellidomaterno,
+          unidad,
+          division,
+          licenciatura,
+          estado,
+          sancion,
+          correoinstitucional,
+          observaciones
+      )
+      VALUES (
+          $1,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12
+      )
+      RETURNING *`,
       [
-        matricula, 
-        nombre, 
-        apellidopaterno, 
-        apellidomaterno, 
-        unidad, division, 
-        licenciatura, 
-        estado, 
-        sancion, 
-        correoinstitucional, 
-        observaciones
+        matricula,
+        idKeycloak,
+        nombre,
+        apellidopaterno,
+        apellidomaterno,
+        unidad,
+        division,
+        licenciatura,
+        estado,
+        sancion,
+        correoinstitucional,
+        observaciones,
       ]
     );
 
     res.json(result.rows[0]);
   } catch (error) {
-    console.error("ERROR REAL DE POSTGRES:", error.message); // <-- AGREGA ESTO
+    console.error(error);
     next(error);
   }
 };
