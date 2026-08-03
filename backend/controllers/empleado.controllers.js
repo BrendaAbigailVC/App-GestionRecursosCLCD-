@@ -1,5 +1,5 @@
 const pool = require("../db");
-
+const { crearUsuarioKeycloak } = require("../services/keycloak.service");
 // Obtener todos los empleados con información adicional
 const getAllEmpleados = async (req, res, next) => {
   try {
@@ -59,7 +59,7 @@ const createEmpleado = async (req, res, next) => {
   try {
     const {
       noEconomico,
-      id_keycloak,
+      password,
       nombre,
       apellidoPaterno,
       apellidoMaterno,
@@ -68,16 +68,42 @@ const createEmpleado = async (req, res, next) => {
       tipo,
     } = req.body;
 
+let rol = "";
+
+switch (Number(tipo)) {
+  case 0:
+    rol = "COORDINADOR";
+    break;
+  case 1:
+    rol = "TECNICO";
+    break;
+  case 2:
+    rol = "PROFESOR";
+    break;
+  default:
+    throw new Error("Tipo de empleado inválido");
+}
+
+const id_keycloak = await crearUsuarioKeycloak({
+  username: correoInstitucional,
+  email: correoInstitucional,
+  password,
+  firstName: nombre,
+  lastName: `${apellidoPaterno} ${apellidoMaterno}`,
+  rol,
+});
+
     await client.query("BEGIN");
 
     const result = await client.query(
       `INSERT INTO empleado 
-        (id, NoEconomico, id_keycloak, Nombre, apellidoPaterno, apellidoMaterno, CorreoInstitucional, Estado, Tipo) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+        (id, NoEconomico,password,id_keycloak, Nombre, apellidoPaterno, apellidoMaterno, CorreoInstitucional, Estado, Tipo) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
       RETURNING *`,
       [
         noEconomico,
         noEconomico,
+        password,
         id_keycloak,
         nombre,
         apellidoPaterno,

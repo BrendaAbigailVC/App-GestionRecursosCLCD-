@@ -1,0 +1,11 @@
+ALTER TABLE empleado
+ADD COLUMN id_keycloak VARCHAR(255);
+
+ALTER TABLE alumno
+ADD COLUMN id_keycloak VARCHAR(255);
+
+ALTER TABLE empleado
+ALTER COLUMN password DROP NOT NULL;
+
+ALTER TABLE alumno
+ALTER COLUMN password DROP NOT NULL;

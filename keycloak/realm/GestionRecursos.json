@@ -26,7 +26,7 @@
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "NONE",
   "registrationAllowed": true,
   "registrationEmailAsUsername": false,
   "rememberMe": false,
@@ -49,7 +49,7 @@
     "realm": [
       {
         "id": "62648910-fa9f-49ca-818c-51512723f084",
-        "name": "alumnos",
+        "name": "ALUMNO",
         "description": "Estudiantes con acceso a consulta de recursos",
         "composite": false,
         "clientRole": false,
@@ -58,7 +58,7 @@
       },
       {
         "id": "6e6ee51d-15ec-43bd-a104-ab1de9e7fd7d",
-        "name": "coordinadores",
+        "name": "COORDINADOR",
         "description": "Usuarios con control total sobre reportes y gestión de otros roles",
         "composite": false,
         "clientRole": false,
@@ -97,7 +97,7 @@
       },
       {
         "id": "42871745-8fa7-48c3-9989-4c8b9621be6c",
-        "name": "profesores",
+        "name": "PROFESOR",
         "description": "Personal docente con permisos de reserva",
         "composite": false,
         "clientRole": false,
@@ -115,7 +115,7 @@
       },
       {
         "id": "1ea7f0ff-f2b9-47c4-ae23-0e4cf2ba682f",
-        "name": "técnicos",
+        "name": "TECNICO",
         "description": "Personal encargado del mantenimiento y stock de materiales",
         "composite": false,
         "clientRole": false,
