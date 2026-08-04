@@ -121,6 +121,7 @@ const updateAlumno = async (req, res, next) => {
     const { id } = req.params;
     const {
       matricula,
+      password,
       nombre,
       apellidop,
       apellidom,
@@ -132,15 +133,53 @@ const updateAlumno = async (req, res, next) => {
       observaciones,
     } = req.body;
 
-    const query = `
+    let query;
+    let values;
+
+    if (password && password.trim() !== "") {
+      query = `
+        UPDATE alumno 
+        SET matricula = $1, password = $2, nombre = $3, apellidopaterno = $4, 
+            apellidomaterno = $5, unidad = $6, division = $7, licenciatura = $8, 
+            estado = $9, correoinstitucional = $10, observaciones = $11
+        WHERE id = $12 
+        RETURNING *`;
+      values = [
+        matricula,
+        password,
+        nombre,
+        apellidop,
+        apellidom,
+        unidad,
+        division,
+        licenciatura,
+        estado,
+        correoinstitucional,
+        observaciones,
+        id,
+      ];
+    } else {
+      query = `
         UPDATE alumno 
         SET matricula = $1, nombre = $2, apellidopaterno = $3, 
             apellidomaterno = $4, unidad = $5, division = $6, licenciatura = $7, 
             estado = $8, correoinstitucional = $9, observaciones = $10
         WHERE id = $11 
         RETURNING *`;
-    
-    const values = [matricula, nombre, apellidop, apellidom, unidad, division, licenciatura, estado, correoinstitucional, observaciones, id];
+      values = [
+        matricula,
+        nombre,
+        apellidop,
+        apellidom,
+        unidad,
+        division,
+        licenciatura,
+        estado,
+        correoinstitucional,
+        observaciones,
+        id,
+      ];
+    }
 
     const result = await pool.query(query, values);
 
@@ -150,10 +189,53 @@ const updateAlumno = async (req, res, next) => {
 
     return res.json(result.rows[0]);
   } catch (error) {
+    console.error("Error al actualizar alumno:", error);
     next(error);
   }
 };
 
+const updatePass = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { password, ...rest } = req.body;
+
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    for (const [key, value] of Object.entries(rest)) {
+      if (value !== undefined && value !== null) {
+        fields.push(`${key} = $${idx++}`);
+        values.push(value);
+      }
+    }
+
+    if (password && password.trim() !== "") {
+      fields.push(`password = $${idx++}`);
+      values.push(password);
+    }
+
+    values.push(id);
+
+    const query = `
+      UPDATE alumno
+      SET ${fields.join(", ")}
+      WHERE id = $${idx}
+      RETURNING *;
+    `;
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Alumno no encontrado" });
+    }
+
+    return res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error al actualizar alumno:", error);
+    next(error);
+  }
+};
 
 const getPerfil = async (req, res, next) => { 
   try {
@@ -205,5 +287,6 @@ module.exports = {
   createAlumno,
   deleteAlumno,
   updateAlumno,
+  updatePass,
   getPerfil,
 };

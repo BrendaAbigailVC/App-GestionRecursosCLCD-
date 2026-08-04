@@ -199,6 +199,7 @@ const updateEmpleado = async (req, res, next) => {
     const { id } = req.params;
     const {
       noEconomico,
+      password,
       nombre,
       apellidoPaterno,
       apellidoMaterno,
@@ -207,14 +208,41 @@ const updateEmpleado = async (req, res, next) => {
       tipo,
     } = req.body;
 
-    const query = `
-      UPDATE empleado 
-      SET noeconomico = $1, nombre = $2, apellidopaterno = $3, 
-          apellidomaterno = $4, correoinstitucional = $5, estado = $6, tipo = $7
-      WHERE id = $8 
-      RETURNING *`;
+    const campos = [];
+    const valores = [];
+    let index = 1;
 
-    const valores = [noEconomico, nombre, apellidoPaterno, apellidoMaterno, correoInstitucional, estado, tipo, id];
+    campos.push(`NoEconomico = $${index++}`);
+    valores.push(noEconomico);
+
+    if (password) {
+      campos.push(`Password = $${index++}`);
+      valores.push(password);
+    }
+
+    campos.push(`Nombre = $${index++}`);
+    valores.push(nombre);
+
+    campos.push(`ApellidoPaterno = $${index++}`);
+    valores.push(apellidoPaterno);
+
+    campos.push(`ApellidoMaterno = $${index++}`);
+    valores.push(apellidoMaterno);
+
+    campos.push(`CorreoInstitucional = $${index++}`);
+    valores.push(correoInstitucional);
+
+    campos.push(`Estado = $${index++}`);
+    valores.push(estado);
+
+    campos.push(`Tipo = $${index++}`);
+    valores.push(tipo);
+
+    valores.push(id);
+    const query = `
+      UPDATE empleado SET ${campos.join(", ")}
+      WHERE id = $${valores.length}
+      RETURNING *`;
 
     const result = await pool.query(query, valores);
 
@@ -227,6 +255,7 @@ const updateEmpleado = async (req, res, next) => {
     next(error);
   }
 };
+
 // Obtener tipos de empleado
 const getTiposEmpleado = async (req, res, next) => {
   try {
@@ -315,6 +344,25 @@ const updateEmpleadoPermisos = async (req, res, next) => {
   }
 };
 
+const getTecnicos = async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        e.id,
+        e.noeconomico,
+        (e.nombre || ' ' || e.apellidopaterno || ' ' || e.apellidomaterno) AS nombre_completo
+      FROM empleado e
+      WHERE e.tipo = 1
+      AND e.estado = 0
+      ORDER BY e.nombre ASC`
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // busqueda por id_keycloak
 const getEmpleadoByUUID = async (req, res, next) => {
   try {
@@ -348,5 +396,6 @@ module.exports = {
   getPermisosEmpleado,
   getEmpleadoPermisos,
   updateEmpleadoPermisos,
+  getTecnicos,
   getEmpleadoByUUID,
 };

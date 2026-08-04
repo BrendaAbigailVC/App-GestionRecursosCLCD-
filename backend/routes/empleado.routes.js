@@ -10,7 +10,8 @@ const {
   getPermisosEmpleado,
   getEmpleadoPermisos,
   updateEmpleadoPermisos,
-  getEmpleadoByUUID
+  getEmpleadoByUUID,
+  getTecnicos
 } = require("../controllers/empleado.controllers");
 
 // ... imports
@@ -35,5 +36,8 @@ router.put("/:id", updateEmpleado);
 // 4. Listado y creación
 router.get("/", getAllEmpleados);
 router.post("/", createEmpleado);
+
+// 5. Técnicos
+router.get("/tecnicos", getTecnicos);
 
 module.exports = router;
