@@ -11,6 +11,7 @@ import {
 } from "../elementos/ElementosDeFormulario";
 import Boton from "../elementos/Boton";
 import BotonAtras from "../elementos/BotonAtras";
+import { API_BASE_URL } from "./config";
 
 const TablaMateriales = styled.table`
   width: 100%;
@@ -50,7 +51,7 @@ const MostrarPrestamo = () => {
 
     const fetchPrestamo = async () => {
       try {
-        const res = await fetch(`/api/prestamo/${id}`);
+        const res = await fetch(`${API_BASE_URL}/prestamos/prestamo/${id}`);
         if (!res.ok) throw new Error("No se pudo cargar el préstamo.");
         const data = await res.json();
         setPrestamo(data);

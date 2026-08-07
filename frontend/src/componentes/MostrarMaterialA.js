@@ -12,6 +12,7 @@ import {
 } from "../elementos/ElementosDeFormulario";
 import imagen1 from "../imagenes/motasPantera4.png";
 import BotonAtras from "../elementos/BotonAtras";
+import { API_BASE_URL } from "./config";
 
 const ImagenMotas = styled.img`
   position: absolute;
@@ -56,7 +57,7 @@ const MostrarMaterialA = () => {
     }
     const fetchMaterial = async () => {
       try {
-        const response = await fetch(`/api/material/${id}`);
+        const response = await fetch(`${API_BASE_URL}/materiales/${id}`);
         if (response.ok) {
           const data = await response.json();
           setFormData({

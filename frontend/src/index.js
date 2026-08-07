@@ -20,6 +20,8 @@ import Historico from "./componentes/Historico";
 import HistoricoAlumno from "./componentes/HistoricoAlumno";
 import HomeAlumno from "./componentes/HomeAlumno";
 import HomeCoordinador from "./componentes/HomeCoordinador";
+import HistorialMaterial from "./componentes/HistorialMaterial";
+import IncidenciasMateriales from "./componentes/IncidenciasMateriales";
 import MaterialesDisponibles from "./componentes/MaterialesDisponibles";
 import MostrarAlumno from "./componentes/MostrarAlumnos";
 import MostrarALUMNOPass from "./componentes/MostrarAlumnosPass";
@@ -123,7 +125,7 @@ root.render(
               <Route path="/eliminar-usuarios" element={<RutaProtegida rolesPermitidos={["COORDINADOR"]}><EliminarUsuarios /></RutaProtegida>} />
               <Route path="/permisos" element={<RutaProtegida rolesPermitidos={["COORDINADOR"]}><Permisos /></RutaProtegida>} />
               <Route path="/editar-permiso/:id" element={<RutaProtegida rolesPermitidos={["COORDINADOR"]}><EditarPermiso /></RutaProtegida>} />
-              <Route path="/mostrar-ALUMNO-pass" element={<RutaProtegida rolesPermitidos={["COORDINADOR"]}><MostrarALUMNOPass /></RutaProtegida>} />
+              <Route path="/mostrar-alumnos-pass" element={<RutaProtegida rolesPermitidos={["COORDINADOR"]}><MostrarALUMNOPass /></RutaProtegida>} />
               <Route path="/editar-pass/:id" element={<RutaProtegida rolesPermitidos={["COORDINADOR"]}><EditarPass /></RutaProtegida>} />
               <Route path="/registro-empleado" element={<RutaProtegida rolesPermitidos={["COORDINADOR"]}><RegistrarEmpleado /></RutaProtegida>} />
               <Route path="/mostrar-empleados" element={<RutaProtegida rolesPermitidos={["COORDINADOR"]}><MostrarEmpleado /></RutaProtegida>} />
@@ -137,7 +139,7 @@ root.render(
               <Route path="/editar-material/:id" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><EditarMaterial /></RutaProtegida>} />
               <Route path="/eliminar-material" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><EliminarMaterial /></RutaProtegida>} />
               <Route path="/registro-alumno" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><RegistrarAlumno /></RutaProtegida>} />
-              <Route path="/mostrar-ALUMNO" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><MostrarAlumno /></RutaProtegida>} />
+              <Route path="/mostrar-alumnos" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><MostrarAlumno /></RutaProtegida>} />
               <Route path="/editar-alumno/:id" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><EditarAlumno /></RutaProtegida>} />
               <Route path="/eliminar-alumno" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><EliminarAlumno /></RutaProtegida>} />
               <Route path="/reportes" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><Reportes /></RutaProtegida>} />
@@ -150,14 +152,15 @@ root.render(
               <Route path="/mostrar-usuarios" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><MostrarUsuarios /></RutaProtegida>} />
               
               <Route path="/inicio-alumno" element={<RutaProtegida rolesPermitidos={["ALUMNO", "PROFESOR", "COORDINADOR", "TECNICO"]}><HomeAlumno /></RutaProtegida>} />
-              
               <Route path="/mostrar-materiales-a" element={<RutaProtegida rolesPermitidos={["ALUMNO", "PROFESOR"]}><MostrarMaterialesA /></RutaProtegida>} />
               <Route path="/mostrar-material-a/:id" element={<RutaProtegida rolesPermitidos={["ALUMNO", "PROFESOR"]}><MostrarMaterialA /></RutaProtegida>} />
-              
+              <Route path="/historial-material/:id" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><HistorialMaterial /></RutaProtegida>} />
+              <Route path="/incidencias-materiales" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO"]}><IncidenciasMateriales /></RutaProtegida>} />
+
               <Route path="/perfil-alumno" element={<RutaProtegida rolesPermitidos={["ALUMNO"]}><PerfilAlumno /></RutaProtegida>} />
               <Route path="/historico-alumno" element={<RutaProtegida rolesPermitidos={["ALUMNO"]}><HistoricoAlumno /></RutaProtegida>} />
               <Route path="/mostrar-prestamo-alumno/:id" element={<RutaProtegida rolesPermitidos={["ALUMNO"]}><MostrarPrestamoAlumno /></RutaProtegida>} />
-              
+              <Route path="/mostrar-prestamo/:id" element={<MostrarPrestamo  rolesPermitidos={["COORDINADOR", "TECNICO"]}/>} />
               <Route path="/perfil" element={<RutaProtegida rolesPermitidos={["COORDINADOR", "TECNICO", "PROFESOR"]}><Perfil /></RutaProtegida>} />
               <Route path="/app" element={<App />} />
               <Route path="/acceso-denegado" element={<PantallaAccesoDenegado />} />

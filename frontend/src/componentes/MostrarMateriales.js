@@ -6,6 +6,13 @@ import styled from "styled-components";
 import BotonAtras from "../elementos/BotonAtras";
 import { API_BASE_URL } from "./config";
 
+const SelectFiltro = styled.select`
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+`;
+
 const Tabla = styled.table`
   width: 90%;
   margin: 20px auto;
@@ -64,10 +71,56 @@ const BotonEditar = styled.button`
   }
 `;
 
+const BotonHistorial = styled.button`
+  padding: 8px 12px;
+  background-color: #5d9cec;
+  border: none;
+  color: white;
+  border-radius: 7px;
+  cursor: pointer;
+  margin-right: 5px;
+  &:hover {
+    background-color: #4a89dc;
+  }
+`;
+
+const traducirEstado = (estado, tipo, cantidad) => {
+  if (tipo === 1 && cantidad === 0) {
+    return { texto: "Agotado", color: "red" };
+  }
+
+  switch (estado) {
+    case 0:
+      return { texto: "Disponible", color: "green" };
+    case 1:
+      return { texto: "Prestado", color: "purple" };
+    case 2:
+      return { texto: "Con incidencia", color: "orange" };
+    case 3:
+      return { texto: "En reparación", color: "blue" };
+    case 4:
+      return { texto: "Dado de baja", color: "red" };
+    default:
+      return { texto: "Desconocido", color: "gray" };
+  }
+};
+
+
+
+const CeldaEstado = styled.td`
+  padding: 10px 15px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+  font-weight: bold;
+  color: ${(props) => props.color};
+`;
+
+
 const MostrarMateriales = () => {
   const navigate = useNavigate();
   const [materiales, setMateriales] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("todos");
 
   const obtenerMateriales = async () => {
     try {
@@ -92,10 +145,13 @@ const MostrarMateriales = () => {
 
   const materialesFiltrados = materiales.filter((material) => {
     const termino = busqueda.toLowerCase();
-    return (
+    const coincideBusqueda =
       material.id.toLowerCase().includes(termino) ||
-      material.nombrematerial.toLowerCase().includes(termino)
-    );
+      material.nombrematerial.toLowerCase().includes(termino);
+    const coincideEstado =
+      filtroEstado === "todos" ||
+      material.estado.toString() === filtroEstado;
+    return coincideBusqueda && coincideEstado;
   });
 
   return (
@@ -119,6 +175,18 @@ const MostrarMateriales = () => {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
+        <SelectFiltro
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value)}
+          style={{ padding: "10px", marginLeft: "10px" }}
+        >
+          <option value="todos">Todos</option>
+          <option value="0">Disponible</option>
+          <option value="1">Prestado</option>
+          <option value="2">Con incidencia</option>
+          <option value="3">En reparación</option>
+          <option value="4">Dado de baja</option>
+        </SelectFiltro>
       </ContenedorBusqueda>
 
       <Tabla>
@@ -139,31 +207,43 @@ const MostrarMateriales = () => {
         </EncabezadoTabla>
 
         <CuerpoTabla>
-          {materialesFiltrados.map((material) => (
-            <FilaTabla key={material.id}>
-              <Celda>{material.id}</Celda>
-              <Celda>{material.inventario_uam}</Celda>
-              <Celda>{material.inventario_coordinacion}</Celda>
-              <Celda>{material.marca}</Celda>
-              <Celda>{material.modelo}</Celda>
-              <Celda>{material.numeroserie}</Celda>
-              <Celda>{material.nombrematerial}</Celda>
-              <Celda>{material.cantidad}</Celda>
-              <Celda>
-                {material.estado === 0 ? "Disponible" : "Sin Disponibilidad"}
-              </Celda>
-              <Celda>
-                {material.tipo === 0 ? "Inventariado" : "Consumible"}
-              </Celda>
-              <Celda>
-                <BotonEditar
-                  onClick={() => navigate(`/editar-material/${material.id}`)}
-                >
-                  Editar
-                </BotonEditar>
-              </Celda>
-            </FilaTabla>
-          ))}
+          {materialesFiltrados.map((material) => {
+            const estadoInfo = traducirEstado(
+              material.estado,
+              material.tipo,
+              material.cantidad
+            );
+            return (
+              <FilaTabla key={material.id}>
+                <Celda>{material.id}</Celda>
+                <Celda>{material.inventario_uam}</Celda>
+                <Celda>{material.inventario_coordinacion}</Celda>
+                <Celda>{material.marca}</Celda>
+                <Celda>{material.modelo}</Celda>
+                <Celda>{material.numeroserie}</Celda>
+                <Celda>{material.nombrematerial}</Celda>
+                <Celda>{material.cantidad}</Celda>
+                <CeldaEstado color={estadoInfo.color}>
+                  {estadoInfo.texto}
+                </CeldaEstado>
+                <Celda>
+                  {material.tipo === 0 ? "Inventariado" : "Consumible"}
+                </Celda>
+                <Celda>
+                  <BotonEditar
+                    onClick={() => navigate(`/editar-material/${material.id}`)}
+                  >
+                    Editar
+                  </BotonEditar>
+                  <BotonHistorial
+                    onClick={() => navigate(`/historial-material/${material.id}`)}
+                  >
+                    Historial
+                  </BotonHistorial>
+                </Celda>
+              </FilaTabla>
+            );
+          })}
         </CuerpoTabla>
       </Tabla>
     </>

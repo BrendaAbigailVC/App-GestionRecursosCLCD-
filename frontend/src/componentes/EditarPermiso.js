@@ -179,7 +179,7 @@ const EditarPermiso = () => {
 
         <ContenedorBoton>
           <Boton as="button" type="submit" primario>
-            Guardar Cambios
+            Guardar permisos
           </Boton>
         </ContenedorBoton>
       </FormularioRegistro>

@@ -186,7 +186,7 @@ const Historico = () => {
       <ContenedorBusqueda>
         <InputBusqueda
           type="text"
-          placeholder="Buscar por ID, matrícula o nombre..."
+          placeholder="Buscar por ID, matrícula o empleado..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />

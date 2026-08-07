@@ -137,7 +137,7 @@ const RegistrarMaterial = () => {
     }*/
 
     try {
-      const response = await fetch(`${API_BASE_URL}/materiales/material`, {
+      const response = await fetch(`${API_BASE_URL}/materiales/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -260,6 +260,17 @@ const RegistrarMaterial = () => {
             error={erroresMensaje.nombreMaterial}
           />
           <MensajeConError error={erroresMensaje.nombreMaterial} />
+          Tipo
+          <Select
+            name="tipo"
+            value={formData.tipo}
+            onChange={handleChange}
+            error={erroresMensaje.tipo}
+          >
+            <option value="">Seleccione Tipo</option>
+            <option value="0">Inventariado</option>
+            <option value="1">Consumible</option>
+          </Select>
           Cantidad
           <Input2
             type="text"
@@ -276,17 +287,7 @@ const RegistrarMaterial = () => {
             <option value="0">Disponible</option>
             <option value="1">Sin Disponibilidad</option>
           </Select>
-          Tipo
-          <Select
-            name="tipo"
-            value={formData.tipo}
-            onChange={handleChange}
-            error={erroresMensaje.tipo}
-          >
-            <option value="">Seleccione Tipo</option>
-            <option value="0">Inventariado</option>
-            <option value="1">Consumible</option>
-          </Select>
+
           <MensajeConError error={erroresMensaje.tipo} />
           Descripción
           <Input2

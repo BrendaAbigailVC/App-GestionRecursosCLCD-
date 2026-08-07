@@ -26,6 +26,9 @@ router.get("/permisos-empleado", getPermisosEmpleado);
 // 2. Perfil (Mantenlo con /perfil/)
 router.get("/perfil/:uuid", getEmpleadoByUUID);
 
+// 5. Técnicos
+router.get("/tecnicos", getTecnicos);
+
 // 3. Específicos por ID (Quitamos la palabra /empleado/ de la subruta)
 router.get("/:id", getEmpleado); 
 router.get("/:id/permisos", getEmpleadoPermisos);
@@ -37,7 +40,6 @@ router.put("/:id", updateEmpleado);
 router.get("/", getAllEmpleados);
 router.post("/", createEmpleado);
 
-// 5. Técnicos
-router.get("/tecnicos", getTecnicos);
+
 
 module.exports = router;

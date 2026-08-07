@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
+import { API_BASE_URL } from "./config";
+
 import {
   TitutuloSecciones,
   FormularioRegistroSecciones,
@@ -14,6 +16,7 @@ import {
 } from "../elementos/ElementosDeFormulario";
 import imagen1 from "../imagenes/motasPantera4.png";
 import BotonAtras from "../elementos/BotonAtras";
+import Swal from "sweetalert2";
 
 const ImagenMotas = styled.img`
   position: absolute;
@@ -52,7 +55,7 @@ const EditarMaterial = () => {
   useEffect(() => {
     const fetchMaterial = async () => {
       try {
-        const response = await fetch(`/api/material/${id}`);
+        const response = await fetch(`${API_BASE_URL}/materiales/${id}`);
         if (response.ok) {
           const data = await response.json();
           setFormData({
@@ -69,10 +72,18 @@ const EditarMaterial = () => {
             descripcion: data.descripcion || "",
           });
         } else {
-          alert("Error al obtener datos del material");
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Error al obtener datos del material",
+          });
         }
       } catch (error) {
-        console.error("Error al cargar material:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Hubo un error al cargar los datos del material",
+        });
       }
     };
 
@@ -107,13 +118,17 @@ const EditarMaterial = () => {
 
     for (const campo in formData) {
       if (formData[campo].toString().trim() === "") {
-        alert(`Por favor, completa el campo: ${campo}`);
+        Swal.fire({
+          icon: "warning",
+          title: "Campo incompleto",
+          text: `Por favor, completa el campo: ${campo}`,
+        });
         return;
       }
     }
 
     try {
-      const response = await fetch(`/api/material/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/materiales/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -127,10 +142,21 @@ const EditarMaterial = () => {
 
       if (!response.ok) throw new Error("Error al actualizar material");
 
-      alert("Material actualizado con éxito");
+        Swal.fire({
+          icon: "success",
+          title: "Material actualizado",
+          text: "El material ha sido actualizado con éxito.",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
     } catch (error) {
       console.error("Error al actualizar material:", error);
-      alert("Hubo un error al actualizar el material");
+      Swal.fire({
+        icon: "error",
+        title: "Error al actualizar",
+        text: "Hubo un error al actualizar el material.",
+      });
     }
   };
 
@@ -146,7 +172,7 @@ const EditarMaterial = () => {
         </ContenedorHeader>
       </Header>
 
-      <BotonAtras ruta="/materiales" />
+       <BotonAtras ruta="/mostrar-materiales" />
       <ImagenMotas src={imagen1} alt="MotasUam" />
 
       <FormularioRegistro onSubmit={handleSubmit}>
@@ -220,6 +246,7 @@ const EditarMaterial = () => {
             value={formData.cantidad}
             onChange={handleChange}
             required
+            disabled={formData.tipo === "0"}
           />
 
           Estado

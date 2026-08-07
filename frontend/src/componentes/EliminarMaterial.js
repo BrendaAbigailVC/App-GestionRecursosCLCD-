@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import BotonAtras from "../elementos/BotonAtras";
+import Swal from "sweetalert2";
 import { API_BASE_URL } from "./config";
 const Tabla = styled.table`
   width: 90%;
@@ -79,25 +80,50 @@ const EliminarMaterial = () => {
   };
 
   const handleEliminar = async (id) => {
-    const confirmar = window.confirm(
-      "¿Estás seguro de que deseas eliminar este material?"
-    );
-    if (!confirmar) return;
+   const result = await Swal.fire({
+      title: "¿Estás seguro de que deseas eliminar este material?",
+      text: "¡No podrás revertir esto!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminarlo",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
-      const response = await fetch(`/api/material/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/materiales/${id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
         setMateriales((prev) => prev.filter((m) => m.id !== id));
-        alert("Material eliminado correctamente.");
+         Swal.fire({
+          title: "Material eliminado",
+          text: "El material ha sido eliminado correctamente.",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
       } else {
-        alert("No se pudo eliminar el material.");
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo eliminar el material.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     } catch (error) {
       console.error("Error al eliminar material:", error);
-      alert("Hubo un error al intentar eliminar el material.");
+      Swal.fire({
+        title: "Error",
+        text: "Hubo un error al intentar eliminar el material.",
+        icon: "error",
+        confirmButtonText: "Aceptar",
+      });
     }
   };
 

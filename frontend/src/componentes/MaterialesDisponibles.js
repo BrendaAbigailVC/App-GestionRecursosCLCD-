@@ -8,6 +8,7 @@ import AnadirMaterial from "../imagenes/AnadirMaterial.png";
 import EliminarMaterial from "../imagenes/EliminarMaterial.png";
 import BuscarMaterial from "../imagenes/BuscarMaterial.png";
 import { ContenedorImagen, ImagenLogo1, ContenedorBotonRegistro } from "../elementos/ContenedoresBotones";
+import IncidenciasMateriales from "../imagenes/IncidenciasMateriales.png";
 
 const MaterialesDisponibles = () => {
   const navigate = useNavigate();
@@ -59,6 +60,18 @@ const MaterialesDisponibles = () => {
           >
             {" "}
             Mostrar Materiales
+          </Boton>
+        </ContenedorImagen>
+        <ContenedorImagen>
+          <ImagenLogo1 src={IncidenciasMateriales} alt="IncidenciasMateriales" />
+          <Boton
+            as="button"
+            primario
+            type="submit"
+            onClick={() => navigate("/incidencias-materiales")}
+          >
+            {" "}
+            Incidencias Materiales
           </Boton>
         </ContenedorImagen>
       </ContenedorBotonRegistro>
