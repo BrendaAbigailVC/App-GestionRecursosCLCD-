@@ -237,9 +237,10 @@ const updatePass = async (req, res, next) => {
   }
 };
 
-const getPerfil = async (req, res, next) => { 
+const getPerfil = async (req, res, next) => {
   try {
     const { id } = req.params;
+
     const query = `
       SELECT 
         a.id,
@@ -267,13 +268,16 @@ const getPerfil = async (req, res, next) => {
       LEFT JOIN unidad u ON a.unidad = u.id
       LEFT JOIN division d ON a.division = d.id
       LEFT JOIN licenciatura l ON a.licenciatura = l.id
-      WHERE a.id = $1
+      WHERE a.id_keycloak = $1
     `;
+
     const result = await pool.query(query, [id]);
-    if (result.rows.length == 0)
+
+    if (result.rows.length === 0) {
       return res.status(404).json({
         message: "Alumno no encontrado",
       });
+    }
 
     return res.json(result.rows[0]);
   } catch (error) {

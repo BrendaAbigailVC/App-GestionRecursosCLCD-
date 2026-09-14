@@ -1,3 +1,4 @@
+import { useKeycloak } from "@react-keycloak/web";
 import { Header, Titulo, ContenedorHeader } from "../elementos/Header";
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
@@ -117,6 +118,7 @@ const CeldaEstado = styled.td`
 
 
 const MostrarMateriales = () => {
+  const { keycloak, initialized } = useKeycloak();
   const navigate = useNavigate();
   const [materiales, setMateriales] = useState([]);
   const [busqueda, setBusqueda] = useState("");
@@ -133,15 +135,14 @@ const MostrarMateriales = () => {
   };
 
   useEffect(() => {
-    const id = localStorage.getItem("idUsuario");
-    const tipo = localStorage.getItem("tipoUsuario");
-
-    if (!id || tipo !== "empleado") {
-      navigate("/");
+    if (!initialized) return;
+    if (!keycloak.authenticated) {
+      navigate("/login", { replace: true });
       return;
     }
     obtenerMateriales();
-  }, []);
+}, [initialized, keycloak.authenticated]);
+
 
   const materialesFiltrados = materiales.filter((material) => {
     const termino = busqueda.toLowerCase();

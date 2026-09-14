@@ -71,19 +71,36 @@ const getPrestamosAlumno = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(
-      `
-      SELECT 
-        p.*, 
-        a.matricula AS alumno_matricula, 
-        e.nombre AS empleado_nombre
-      FROM prestamo p
-      LEFT JOIN alumno a ON a.id = p.idalumno
-      LEFT JOIN empleado e ON e.id = p.idempleado
-      WHERE p.idalumno = $1
-    `,
+    const alumnoResult = await pool.query(
+      `SELECT id FROM alumno WHERE id_keycloak = $1`,
       [id]
     );
+
+    if (alumnoResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Alumno no encontrado",
+      });
+    }
+
+    const idAlumno = alumnoResult.rows[0].id;
+
+    const result = await pool.query(
+      `
+      SELECT
+        p.*,
+        a.matricula AS alumno_matricula,
+        CONCAT(e.nombre, ' ', e.apellidopaterno) AS empleado_nombre
+      FROM prestamo p
+      LEFT JOIN alumno a
+        ON a.id = p.solicitante_id
+      LEFT JOIN empleado e
+        ON e.id = p.idempleado
+      WHERE p.solicitante_id = $1
+        AND p.solicitante_tipo = 'ALUMNO'
+      `,
+      [idAlumno]
+    );
+
     res.json(result.rows);
   } catch (error) {
     next(error);

@@ -1,10 +1,11 @@
+import { useKeycloak } from "@react-keycloak/web";
 import { Header, Titulo, ContenedorHeader } from "../elementos/Header";
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import BotonAtras from "../elementos/BotonAtras";
-
+import { API_BASE_URL } from "./config";
 const Tabla = styled.table`
   width: 90%;
   margin: 20px auto;
@@ -64,13 +65,14 @@ const BotonMostrarMas = styled.button`
 `;
 
 const MostrarMaterialesA = () => {
+  const { keycloak, initialized } = useKeycloak();
   const navigate = useNavigate();
   const [materiales, setMateriales] = useState([]);
   const [busqueda, setBusqueda] = useState("");
 
   const obtenerMateriales = async () => {
     try {
-      const response = await fetch("/api/materiales");
+      const response = await fetch(`${API_BASE_URL}/materiales`);
       const data = await response.json();
       setMateriales(data);
     } catch (error) {
@@ -79,15 +81,14 @@ const MostrarMaterialesA = () => {
   };
 
   useEffect(() => {
-    const id = localStorage.getItem("idUsuario");
-    const tipo = localStorage.getItem("tipoUsuario");
+      if (!initialized) return;
+      if (!keycloak.authenticated) {
+        navigate("/login", { replace: true });
+        return;
+      }
 
-    if (!id || tipo !== "alumno") {
-      navigate("/");
-      return;
-    }
     obtenerMateriales();
-  }, []);
+}, [initialized, keycloak.authenticated]);
 
   const materialesFiltrados = materiales.filter((material) => {
     const termino = busqueda.toLowerCase();

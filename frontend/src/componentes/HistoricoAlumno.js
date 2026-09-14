@@ -1,9 +1,11 @@
+import { useKeycloak } from "@react-keycloak/web";
 import { Header, Titulo, ContenedorHeader } from "../elementos/Header";
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import BotonAtras from "../elementos/BotonAtras";
+import { API_BASE_URL } from "./config";
 
 const Tabla = styled.table`
   width: 90%;
@@ -65,16 +67,15 @@ const Boton = styled.button`
 `;
 
 const HistoricoAlumno = () => {
+  const { keycloak, initialized } = useKeycloak();
   const navigate = useNavigate();
   const [prestamos, setPrestamos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
 
   const obtenerPrestamos = async () => {
     try {
-      const idUsuario = localStorage.getItem("idUsuario");
-      const response = await fetch(
-        `/api/prestamos-alumno/${idUsuario}`
-      );
+      const idKeycloak = keycloak.tokenParsed?.sub;
+      const response = await fetch( `${API_BASE_URL}/prestamos/prestamos-alumno/${idKeycloak}` );
       const data = await response.json();
       setPrestamos(data);
     } catch (error) {
@@ -83,15 +84,14 @@ const HistoricoAlumno = () => {
   };
 
   useEffect(() => {
-    const id = localStorage.getItem("idUsuario");
-    const tipo = localStorage.getItem("tipoUsuario");
-
-    if (!id || tipo !== "alumno") {
-      navigate("/");
+    if (!initialized) return;
+    if (!keycloak.authenticated) {
+      navigate("/login", { replace: true });
       return;
     }
+   
     obtenerPrestamos();
-  }, []);
+  }, [initialized, keycloak.authenticated]);
 
   const prestamosFiltrados = prestamos.filter((p) => {
     const termino = busqueda.toLowerCase();
@@ -105,6 +105,11 @@ const HistoricoAlumno = () => {
   const traducirTipoPrestamo = (tipo) => {
     return tipo === 0 ? "Interno" : tipo === 1 ? "Externo" : "Desconocido";
   };
+
+  const CeldaEstado = styled(Celda)`
+  color: ${(props) => (props.prestado ? "#d9534f" : "#5cb85c")};
+  font-weight: bold;
+`;
 
   return (
     <>
@@ -154,7 +159,7 @@ const HistoricoAlumno = () => {
                   : "Sin fecha"}
               </Celda>
               <Celda>{traducirTipoPrestamo(p.tipoprestamo)}</Celda>
-              <Celda>{p.estadoprestamo === 0 ? "Prestado" : "Devuelto"}</Celda>
+              <CeldaEstado prestado={p.estadoprestamo === 0}> {p.estadoprestamo === 0 ? "Prestado" : "Devuelto"} </CeldaEstado>
               <Celda>
                 <Boton
                   onClick={() => navigate(`/mostrar-prestamo-alumno/${p.id}`)}

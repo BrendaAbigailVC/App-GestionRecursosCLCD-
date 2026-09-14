@@ -1,17 +1,13 @@
+import { useKeycloak } from "@react-keycloak/web";
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Header, Titulo, ContenedorHeader } from "../elementos/Header";
 import Boton from "../elementos/Boton";
-import {
-  TitutuloSecciones,
-  FormularioRegistroSecciones,
-  Input2,
-  ContenedorBoton,
-  FormularioRegistro,
-} from "../elementos/ElementosDeFormulario";
+import { TitutuloSecciones, FormularioRegistroSecciones, Input2, ContenedorBoton, FormularioRegistro, } from "../elementos/ElementosDeFormulario";
 import imagen1 from "../imagenes/motasPantera4.png";
+import { API_BASE_URL } from "./config";
 
 const ImagenMotas = styled.img`
   position: absolute;
@@ -29,19 +25,15 @@ const ImagenMotas = styled.img`
 `;
 
 const PerfilAlumno = () => {
+  const { keycloak, initialized } = useKeycloak();
   const navigate = useNavigate();
   const [alumno, setAlumno] = useState(null);
 
-  useEffect(() => {
-    const id = localStorage.getItem("idUsuario");
-    const tipo = localStorage.getItem("tipoUsuario");
 
-    if (!id || tipo !== "alumno") {
-      navigate("/");
-      return;
-    }
+   const obtenerPerfilAlumno = async () => {
+    const idKeycloak = keycloak.tokenParsed?.sub;
 
-    fetch(`/api/perfil/${id}`)
+    fetch(`${API_BASE_URL}/alumnos/perfil/${idKeycloak}`)
       .then((response) => {
         if (!response.ok) throw new Error("No se encontró el alumno");
         return response.json();
@@ -51,9 +43,19 @@ const PerfilAlumno = () => {
       })
       .catch(() => {
         alert("No se encontró el alumno");
-        navigate("/");
       });
-  }, [navigate]);
+    };
+
+    useEffect(() => {
+      if (!initialized) return;
+      if (!keycloak.authenticated) {
+        navigate("/login", { replace: true });
+        return;
+      }
+     
+      obtenerPerfilAlumno();
+    }, [initialized, keycloak.authenticated]);
+
 
   return (
     <>
